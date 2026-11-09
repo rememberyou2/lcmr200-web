@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCMR200 範例網頁</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#1f2933;--sub:#5b6673;--line:#d5dbe2;--head:#24476b;--acc:#f2994a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft JhengHei","Noto Sans TC",sans-serif}
+header{background:var(--head);color:#fff;padding:22px 16px}
+header h1{margin:0 auto;max-width:900px;font-size:22px}
+header p{margin:6px auto 0;max-width:900px;opacity:.85;font-size:14px}
+main{max-width:900px;margin:0 auto;padding:16px;display:grid;gap:12px}
+a.card{display:block;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--acc);border-radius:10px;padding:14px 16px;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--head);border-left-color:var(--acc)}
+a.card h2{margin:0 0 4px;font-size:18px;color:var(--head)}
+a.card p{margin:0;color:var(--sub);font-size:14px;line-height:1.6}
+footer{max-width:900px;margin:0 auto;padding:4px 16px 24px;color:var(--sub);font-size:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <h1>KEYENCE KV-8000 ↔ YAMAHA LCMR200（EtherCAT）範例網頁</h1>
+  <p>人機畫面預覽與 ST / 階梯圖教學。所有畫面都是瀏覽器裡的模擬，不會連線到實機。</p>
+</header>
+<main>
+  <a class="card" href="Ladder_ST_Tutorial.html">
+    <h2>ST ⇄ 階梯圖 對照教學</h2>
+    <p>7 課：讀 YHX 狀態、心跳監視、伺服 ON、移動交握、站點預約、橫移換搭。可以點接點看電流和時序圖。</p>
+  </a>
+  <a class="card" href="HMI_Mockup.html">
+    <h2>VT 人機畫面預覽</h2>
+    <p>VT5-W10（1280×800）：主畫面、手動操作、I/O 監視、警報。可模擬急停、軸警報、通訊中斷。</p>
+  </a>
+  <a class="card" href="LCMR200_Screen.html">
+    <h2>LCMR200 軌道操作畫面</h2>
+    <p>循環軌道俯視圖、多台滑塊、左右橫移換搭；可設定滑塊數與去程 / 回程長度。</p>
+  </a>
+</main>
+<footer>畫面中的位址、點號與座標為範例值，實際請依 YHX 用戶手冊與實機設定。</footer>
+</body>
+</html>

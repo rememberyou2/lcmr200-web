@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCMR200 軌道操作</title>
+<style>
+:root{
+  --bg:#1d2229; --frame:#2b3038; --panel:#eef1f4; --card:#fff; --line:#c8cfd8;
+  --ink:#1f2933; --sub:#5b6673; --head:#24476b;
+  --g:#22b14c; --r:#e5383b; --y:#f4b400; --b:#2f80ed; --o:#f2994a; --off:#9aa5b1; --btn:#dfe5ec;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"Microsoft JhengHei","Noto Sans TC",sans-serif;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;padding:16px;gap:10px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;color:#cfd6de;font-size:13px;max-width:1280px;width:100%}
+.bar b{color:#fff}
+.bar input{width:70px;background:#2b3038;color:#fff;border:1px solid #556;border-radius:4px;padding:3px 6px}
+.bar button{background:#3a414b;color:#fff;border:1px solid #556;border-radius:4px;padding:4px 10px;cursor:pointer}
+.bar button.on{background:#a33}
+.wrap{width:100%;max-width:1280px}
+.vt{width:1280px;height:800px;transform-origin:top left;background:var(--panel);border:10px solid var(--frame);border-radius:10px;overflow:hidden;position:relative}
+.hdr{height:64px;background:var(--head);color:#fff;display:flex;align-items:center;padding:0 16px;gap:18px}
+.hdr .t{font-size:22px;font-weight:bold;white-space:nowrap}
+.hl{display:flex;gap:12px;font-size:14px}
+.hl span{display:flex;align-items:center;gap:5px}
+.msg{margin-left:auto;background:#0e2033;border-radius:4px;padding:8px 14px;min-width:300px;font-size:17px}
+.msg.err{background:var(--r)}
+.main{position:absolute;top:64px;bottom:80px;left:0;right:0;display:grid;grid-template-columns:870px 1fr;gap:12px;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.card h3{margin:0 0 8px;font-size:17px;color:var(--head);border-bottom:2px solid var(--head);padding-bottom:3px;display:flex;justify-content:space-between}
+.card h3 small{font-weight:normal;color:var(--sub);font-size:12px}
+.left{display:grid;grid-template-rows:auto 1fr;gap:12px;min-height:0}
+svg text{font-family:"Microsoft JhengHei",sans-serif}
+.sl{cursor:pointer}
+.st{cursor:pointer}
+.tblwrap{overflow:auto;min-height:0;height:100%}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;white-space:nowrap}
+th{background:#dfe5ec;position:sticky;top:0}
+tr.sel td{background:#ffe9d6}
+tbody tr{cursor:pointer}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;color:#fff;font-size:12px}
+.dot{width:16px;height:16px;border-radius:50%;background:var(--off);border:2px solid #6b7682;display:inline-block;flex:none}
+.dot.g{background:var(--g)}.dot.r{background:var(--r)}.dot.y{background:var(--y)}.dot.b{background:var(--b)}
+.dot.blink{animation:bl .6s steps(1) infinite}@keyframes bl{50%{background:var(--off)}}
+.right{display:flex;flex-direction:column;gap:8px;min-height:0}
+.big{display:flex;align-items:baseline;gap:10px}
+.big .id{font-size:26px;font-weight:bold;color:var(--o)}
+.num{font-family:Consolas,monospace;font-size:28px;background:#10161d;color:#7CFC9A;border-radius:4px;padding:2px 10px;text-align:right;min-width:170px;display:inline-block}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px;color:var(--sub)}
+.kv b{color:var(--ink);font-weight:normal;font-family:Consolas,monospace}
+.lamps{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;font-size:13px}
+.lamps span{display:flex;align-items:center;gap:5px}
+.row{display:flex;gap:8px;align-items:center;font-size:14px}
+.row label{min-width:78px;color:var(--sub)}
+input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8px;border:2px solid var(--b);border-radius:4px;text-align:right}
+.btn{height:48px;flex:1;font-size:17px;border-radius:7px;border:2px solid #7a8696;background:var(--btn);color:var(--ink);cursor:pointer;user-select:none;touch-action:none}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.go{background:var(--g);color:#fff;border-color:#178a3a}
+.btn.stop{background:var(--r);color:#fff;border-color:#a3262a}
+.btn.sel{background:var(--o);color:#fff;border-color:#c06a1d}
+.btn.press{filter:brightness(.8)}
+.btns{display:flex;gap:8px}
+.ftr{position:absolute;bottom:0;left:0;right:0;height:80px;background:#d5dbe2;display:flex;align-items:center;gap:10px;padding:0 12px}
+.ftr .btn{flex:none;min-width:130px;height:56px}
+.ftr .sp{flex:1}
+.nav{height:56px;min-width:110px;font-size:16px;border:2px solid #8894a3;border-radius:6px;background:var(--btn);cursor:pointer;text-decoration:none;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.nav.cur{background:var(--head);color:#fff;border-color:var(--head)}
+</style>
+</head>
+<body>
+<div class="bar"><b>LCMR200 軌道操作畫面（VT5-W10 1280×800 示意）</b> — 系統規模：
+  滑塊數 <input id="cfgN" type="number" min="1" max="16" value="6">
+  去程長度 mm <input id="cfgA" type="number" min="1000" max="10000" step="100" value="3000">
+  回程長度 mm <input id="cfgB" type="number" min="1000" max="10000" step="100" value="3000">
+  <button id="cfgApply">套用</button>
+</div>
+<div class="bar">模擬：<button id="simEstop">急停</button><button id="simAlm">選擇的滑塊發生軸警報</button><button id="simComm">通訊中斷</button>
+  <span>提示：點滑塊選擇、點站點（P1~P3、P11、P12）可把選擇的滑塊送過去（手動模式）。</span></div>
+
+<div class="wrap" id="wrap"><div class="vt" id="vt">
+  <div class="hdr">
+    <div class="t">LCMR200 軌道操作</div>
+    <div class="hl">
+      <span><i class="dot" id="hHb"></i>心跳</span>
+      <span><i class="dot" id="hAuto"></i>AUTO</span>
+      <span><i class="dot" id="hSv"></i>全軸伺服</span>
+      <span><i class="dot" id="hLock"></i>允許移動</span>
+      <span><i class="dot" id="hRun"></i>自動循環</span>
+      <span><i class="dot" id="hEs"></i>急停</span>
+    </div>
+    <div class="msg" id="msg">正常</div>
+  </div>
+
+  <div class="main">
+    <div class="left">
+      <div class="card">
+        <h3>軌道俯視圖 <small id="trackInfo"></small></h3>
+        <svg id="trk" viewBox="0 0 846 330" width="846" height="330"></svg>
+      </div>
+      <div class="card" style="min-height:0;display:flex;flex-direction:column">
+        <h3>滑塊一覽 <small>點選一列即可選擇滑塊</small></h3>
+        <div class="tblwrap"><table>
+          <thead><tr><th>滑塊</th><th>軸區域</th><th>位置 (mm)</th><th>群組</th><th>點號</th><th>伺服</th><th>狀態</th></tr></thead>
+          <tbody id="tb"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="card right">
+      <h3>選擇的滑塊 <small id="addr"></small></h3>
+      <div class="big"><span class="id" id="selId">#1</span><span class="num" id="selPos">0.000</span> mm</div>
+      <div class="kv">
+        <span>群組</span><b id="selGrp">-</b>
+        <span>指定點號輸出</span><b id="selPt">0</b>
+      </div>
+      <div class="lamps">
+        <span><i class="dot" id="lSv"></i>伺服</span>
+        <span><i class="dot" id="lAct"></i>範圍內</span>
+        <span><i class="dot" id="lMov"></i>移動中</span>
+        <span><i class="dot" id="lArr"></i>到位</span>
+        <span><i class="dot" id="lAlm"></i>軸警報</span>
+        <span><i class="dot" id="lJct"></i>樞紐</span>
+      </div>
+      <div class="btns"><button class="btn man" id="bSvOn">單軸伺服 ON</button><button class="btn man" id="bSvOff">單軸伺服 OFF</button></div>
+      <div class="row"><label>目標點號</label><input class="in" id="iPt" type="number" value="1"><button class="btn go man" id="bMove">點位移動</button></div>
+      <div class="row"><label>立即數 mm</label><input class="in" id="iImm" type="number" step="0.001" value="1500.000"><button class="btn go man" id="bImm">立即數移動</button></div>
+      <div class="btns"><button class="btn man" id="bJogN">◀ JOG −</button><button class="btn man" id="bJogP">JOG + ▶</button></div>
+      <div class="btns"><button class="btn man" id="bInN">寸動 −</button><button class="btn man" id="bInP">寸動 +</button></div>
+      <div class="btns"><button class="btn stop" id="bStop1">停止（此滑塊）</button></div>
+      <div style="font-size:12px;color:var(--sub);line-height:1.5">
+        JOG / 寸動只在同一群組內移動，不會跨橫移。<br>
+        點位移動若目標在後方，滑塊會沿循環方向繞一圈過去。
+      </div>
+    </div>
+  </div>
+
+  <div class="ftr">
+    <button class="btn go" id="bRun">自動循環</button>
+    <button class="btn stop" id="bStopAll">全部停止</button>
+    <button class="btn" id="bReset">警報重置</button>
+    <button class="btn" id="bManual">手動模式</button>
+    <button class="btn" id="bAllSv">全軸伺服 ON</button>
+    <button class="btn" id="bAllSvOff">全軸伺服 OFF</button>
+    <div class="sp"></div>
+    <a class="nav" href="HMI_Mockup.html">其他畫面</a>
+    <span class="nav cur">軌道操作</span>
+  </div>
+</div></div>
+
+<script>
+// ===================== 設定 =====================
+const DRV_UNITS = 2;            // 驅動單元數 (兩台 GX 橫移)，座標從 DRV_UNITS*100mm 開始
+const PIVOT_LEN = 200;          // 橫移上的 LCMR200 模組長度
+const GAP = 260;                // 滑塊最小間距 (托盤長)
+const SPEED = 1200;             // 模擬速度 mm/s
+const PIVOT_T = 1.2;            // 橫移上下一趟秒數
+const DWELL = 1.5;              // 站點停留秒數
+const MSG = ["正常","E01 通訊心跳停止","E02 YHX 系統 / 驅動器警報","E03 軸動作逾時","E04 軸警報","E05 尚未準備好","E06 急停中","E07 滑塊不在控制範圍","E08 啟動逾時"];
+const COLORS = ["#2f80ed","#8e44ad","#16a085","#d35400","#2c3e50","#c0392b","#27ae60","#7f8c8d"];
+
+// ===================== 狀態 =====================
+let A,B,N,ST,sl,pv,sel=0;
+const S={comm:true,auto:true,estop:false,allSv:false,run:false,manual:false,err:0,hb:false,jog:0};
+const $=id=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+
+function build(){
+  N=Math.max(1,Math.min(16,+$("cfgN").value||6));
+  A=Math.max(1000,Math.round((+$("cfgA").value||3000)/100)*100);
+  B=Math.max(1000,Math.round((+$("cfgB").value||3000)/100)*100);
+  const r10=x=>Math.round(x/10)*10;
+  ST=[{p:1,name:"P1 投入",seg:"T",d:r10(A*0.15)},{p:2,name:"P2 加工",seg:"T",d:r10(A*0.5)},
+      {p:3,name:"P3 取出",seg:"T",d:r10(A*0.85)},{p:11,name:"P11 回程緩衝",seg:"B",d:r10(B*0.35)},
+      {p:12,name:"P12 回程緩衝",seg:"B",d:r10(B*0.7)}];
+  // 初始：滑塊平均放在去程 / 回程
+  sl=[];const nT=Math.ceil(N/2),nB=N-nT;
+  for(let i=0;i<nT;i++)sl.push(mk("T",Math.min(A-GAP,100+i*Math.max(GAP+20,(A-200)/nT))));
+  for(let i=0;i<nB;i++)sl.push(mk("B",Math.min(B-GAP,100+i*Math.max(GAP+20,(B-200)/nB))));
+  sl.forEach((s,i)=>s.id=i+1);
+  pv={R:{y:0,carry:null,mv:0,rest:0},L:{y:1,carry:null,mv:0,rest:1}};
+  sel=0;drawStatic();fit();
+}
+function mk(seg,d){return{seg,d,tgt:null,pt:0,dwell:0,lastStop:null,alarm:false,sv:true,moving:false,arrived:true};}
+
+// ===================== 座標 (依手冊 11 章標準例：群組1 左橫移→群組2 去程→群組3 回程→群組4 右橫移) =====================
+// 兩條線都是「左 −、右 +」，回程往 − 方向走 (d 從右端量起)
+const base=()=>DRV_UNITS*100;
+const g2=()=>base()+PIVOT_LEN, g3=()=>g2()+A, g4=()=>g3()+B;
+function coord(s){
+  if(s.seg==="L")return base()+PIVOT_LEN/2;
+  if(s.seg==="T")return g2()+s.d;
+  if(s.seg==="B")return g3()+(B-s.d);
+  return g4()+PIVOT_LEN/2;
+}
+function fromCoord(c){
+  if(c>=g2()&&c<=g3())return{seg:"T",d:c-g2()};
+  if(c>=g3()&&c<=g4())return{seg:"B",d:B-(c-g3())};
+  return null;
+}
+const grpName=s=>({L:"群組1 左橫移",T:"群組2 去程",B:"群組3 回程",R:"群組4 右橫移"})[s.seg];
+const axNo=s=>s.id+2;   // 軸區域 [1][2] = 橫移 GX，滑塊從 [3] 開始
+
+// ===================== 繪圖 =====================
+const G={x0:120,x1:726,yT:95,yB:245,pR:786,pL:60};
+const px=(seg,d)=>seg==="T"?G.x0+(G.x1-G.x0)*d/A:G.x1-(G.x1-G.x0)*d/B;
+let slEls=[],pvEls={};
+function drawStatic(){
+  const svg=$("trk");svg.innerHTML="";
+  // 橫移軌道
+  for(const k of ["L","R"]){const x=k==="L"?G.pL:G.pR;
+    el("line",{x1:x,y1:G.yT-30,x2:x,y2:G.yB+30,stroke:"#9aa5b1","stroke-width":6,"stroke-dasharray":"6 6"},svg);
+    el("text",{x:x,y:G.yB+52,"text-anchor":"middle","font-size":12,fill:"#5b6673"},svg).textContent=(k==="L"?"左":"右")+"橫移 (GX)";}
+  // 去程 / 回程模組
+  for(const [seg,len,y] of [["T",A,G.yT],["B",B,G.yB]]){
+    el("rect",{x:G.x0,y:y-16,width:G.x1-G.x0,height:32,rx:4,fill:"#cfd8e3",stroke:"#8894a3"},svg);
+    let d=0;const mods=[];let rest=len;
+    while(rest>=1000){mods.push(1000);rest-=1000;}
+    for(const m of [500,300,200])while(rest>=m){mods.push(m);rest-=m;}
+    if(rest>0)mods.push(rest);
+    mods.forEach(m=>{const xa=px(seg,d),xb=px(seg,d+m);
+      el("line",{x1:xb,y1:y-16,x2:xb,y2:y+16,stroke:"#8894a3"},svg);
+      el("text",{x:(xa+xb)/2,y:y+(seg==="T"?-22:30),"text-anchor":"middle","font-size":10,fill:"#8894a3"},svg).textContent=(seg==="T"?"F":"B")+(m/100);
+      d+=m;});
+    // 方向箭頭
+    const ay=y+(seg==="T"?40:-40);
+    el("text",{x:(G.x0+G.x1)/2,y:ay,"text-anchor":"middle","font-size":13,fill:"#24476b"},svg).textContent=
+      seg==="T"?`群組2 去程 ${len}mm  ───▶`:`◀───  群組3 回程 ${len}mm`;
+  }
+  // 站點
+  ST.forEach(st=>{const x=px(st.seg,st.d),y=st.seg==="T"?G.yT:G.yB;
+    const g=el("g",{class:"st"},svg);
+    el("line",{x1:x,y1:y-26,x2:x,y2:y+26,stroke:"#f2994a","stroke-width":2,"stroke-dasharray":"3 3"},g);
+    const ly=st.seg==="T"?y-50:y+50;
+    el("rect",{x:x-42,y:ly-12,width:84,height:22,rx:11,fill:"#fff4ea",stroke:"#f2994a"},g);
+    el("text",{x:x,y:ly+4,"text-anchor":"middle","font-size":12,fill:"#c06a1d"},g).textContent=st.name;
+    g.onclick=()=>cmdPoint(st.p);});
+  // 橫移台車
+  pvEls={};
+  for(const k of ["L","R"]){const g=el("g",{},svg);
+    el("rect",{x:-38,y:-20,width:76,height:40,rx:5,fill:"#dfe5ec",stroke:"#24476b","stroke-width":2},g);
+    el("rect",{x:-34,y:-12,width:68,height:24,rx:3,fill:"#cfd8e3",stroke:"#8894a3"},g);
+    pvEls[k]=g;}
+  // 滑塊
+  slEls=sl.map((s,i)=>{const g=el("g",{class:"sl"},svg);
+    const r=el("rect",{x:-22,y:-13,width:44,height:26,rx:4,fill:COLORS[i%COLORS.length],stroke:"#000","stroke-width":1},g);
+    const t=el("text",{x:0,y:5,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"#fff"},g);t.textContent=s.id;
+    g.onclick=()=>{sel=i;};return{g,r};});
+  // 表格
+  $("tb").innerHTML=sl.map((s,i)=>`<tr data-i="${i}"><td>#${s.id}</td><td>[${axNo(s)}] W${4*axNo(s)+36}</td><td class="p"></td><td class="gp"></td><td class="pt"></td><td class="sv"></td><td class="stt"></td></tr>`).join("");
+  $("tb").querySelectorAll("tr").forEach(tr=>tr.onclick=()=>sel=+tr.dataset.i);
+  $("trackInfo").textContent=`滑塊 ${N} 台、去程 ${A}mm、回程 ${B}mm、軸區域 [1][2] 為左 / 右橫移 GX，滑塊從 [3] 開始`;
+}
+
+// ===================== 命令 =====================
+const sysOk=()=>S.comm&&S.auto&&S.allSv&&!S.estop;
+const canMan=()=>S.manual&&!S.run&&sysOk();
+function setErr(c){if(!S.err)S.err=c;}
+function cmdPoint(p){const s=sl[sel];const st=ST.find(x=>x.p===p);
+  if(!canMan()||!s.sv||s.alarm){setErr(5);return;}
+  if(!st){alert("示意點位只有 P1、P2、P3、P11、P12");return;}
+  s.tgt={seg:st.seg,d:st.d};s.pt=p;s.arrived=false;}
+function cmdImm(c){const s=sl[sel];const t=fromCoord(c);
+  if(!canMan()||!s.sv||s.alarm){setErr(5);return;}
+  if(!t){alert("目標座標不在去程 / 回程群組範圍內");return;}
+  s.tgt=t;s.pt=+$("iPt").value||0;s.arrived=false;}
+
+$("bMove").onclick=()=>cmdPoint(+$("iPt").value);
+$("bImm").onclick=()=>cmdImm(+$("iImm").value);
+$("bStop1").onclick=()=>{const s=sl[sel];s.tgt=null;s.pt=0;S.jog=0;};
+$("bSvOn").onclick=()=>{if(S.manual&&!sl[sel].alarm)sl[sel].sv=true;};
+$("bSvOff").onclick=()=>{const s=sl[sel];s.sv=false;s.tgt=null;s.pt=0;};
+$("bInP").onclick=()=>inch(10);$("bInN").onclick=()=>inch(-10);
+function inch(v){const s=sl[sel];if(!canMan()||!s.sv||s.alarm||s.seg==="R"||s.seg==="L")return;
+  const len=s.seg==="T"?A:B;s.d=Math.max(0,Math.min(len,s.d+v));s.arrived=false;}
+function hold(id,dir){const b=$(id);const on=()=>{if(canMan())S.jog=dir;};const off=()=>S.jog=0;
+  b.onpointerdown=on;b.onpointerup=off;b.onpointerleave=off;}
+hold("bJogP",1);hold("bJogN",-1);
+$("bRun").onclick=()=>{if(S.manual||S.err)return;if(!S.allSv)S.allSv=true;S.run=true;};
+$("bStopAll").onclick=()=>{S.run=false;S.jog=0;sl.forEach(s=>{s.tgt=null;s.dwell=0;});};
+$("bReset").onclick=()=>{sl.forEach(s=>{if(s.alarm){s.alarm=false;}});if(S.comm&&!S.estop)S.err=0;};
+$("bManual").onclick=()=>{if(!S.run)S.manual=!S.manual;};
+$("bAllSv").onclick=()=>{if(!S.estop&&S.comm){S.allSv=true;sl.forEach(s=>{if(!s.alarm)s.sv=true;});}};
+$("bAllSvOff").onclick=()=>{S.allSv=false;S.run=false;};
+$("simEstop").onclick=e=>{S.estop=!S.estop;e.target.classList.toggle("on",S.estop);if(S.estop){S.allSv=false;S.run=false;setErr(6);}};
+$("simAlm").onclick=()=>{const s=sl[sel];s.alarm=true;s.tgt=null;setErr(4);};
+$("simComm").onclick=e=>{S.comm=!S.comm;e.target.classList.toggle("on",!S.comm);if(!S.comm){S.run=false;S.allSv=false;setErr(1);}};
+$("cfgApply").onclick=()=>{S.run=false;S.err=0;build();};
+
+// ===================== 模擬 =====================
+const DT=0.05;
+function blockedAhead(s,len){ // 同群組前方最近滑塊允許的最大前進量
+  let lim=len-s.d;
+  for(const o of sl)if(o!==s&&o.seg===s.seg&&o.d>s.d)lim=Math.min(lim,o.d-s.d-GAP);
+  return Math.max(0,lim);
+}
+function clearStart(seg){return sl.every(o=>o.seg!==seg||o.d>=GAP);}
+function nextStation(s){
+  return ST.filter(st=>st.seg===s.seg&&st.p<10&&st.d>s.d+0.5&&st.d!==s.lastStop).sort((a,b)=>a.d-b.d)[0];
+}
+function step(){
+  S.hb=!S.hb;
+  const ok=sysOk();
+  // 自動循環時每台滑塊自己往前，到站停留
+  sl.forEach(s=>{s.moving=false;
+    if(!ok||!s.sv||s.alarm)return;
+    if(s.dwell>0){s.dwell-=DT;return;}
+    const want=S.run||s.tgt;
+    if(s.seg==="T"||s.seg==="B"){
+      const len=s.seg==="T"?A:B;
+      // JOG (手動、選擇的滑塊)
+      if(!S.run&&S.jog&&sl[sel]===s){
+        if(S.jog>0){const m=Math.min(SPEED*0.4*DT,blockedAhead(s,len));if(m>0){s.d+=m;s.moving=true;s.arrived=false;}}
+        else{let lim=s.d;for(const o of sl)if(o!==s&&o.seg===s.seg&&o.d<s.d)lim=Math.min(lim,s.d-o.d-GAP);
+          const m=Math.min(SPEED*0.4*DT,Math.max(0,lim));if(m>0){s.d-=m;s.moving=true;s.arrived=false;}}
+        return;}
+      if(!want)return;
+      let mv=Math.min(SPEED*DT,blockedAhead(s,len));
+      // 目標 / 站點
+      let stop=null;
+      if(s.tgt&&s.tgt.seg===s.seg&&s.tgt.d>=s.d)stop={d:s.tgt.d,kind:"tgt"};
+      else if(S.run){const st=nextStation(s);if(st)stop={d:st.d,kind:"st",p:st.p};}
+      if(stop&&s.d+mv>=stop.d){mv=stop.d-s.d;}
+      if(mv>0.01){s.d+=mv;s.moving=true;s.arrived=false;}
+      if(stop&&Math.abs(s.d-stop.d)<0.01){
+        if(stop.kind==="tgt"){s.tgt=null;s.arrived=true;}
+        else{s.dwell=DWELL;s.lastStop=stop.d;s.pt=stop.p;s.arrived=true;}
+        return;}
+      // 到群組尾端 → 上橫移
+      if(s.d>=len-0.01){const p=s.seg==="T"?pv.R:pv.L;const need=s.seg==="T"?0:1;
+        if(p.carry===null&&p.mv===0&&Math.abs(p.y-need)<0.001){p.carry=s;s.seg=s.seg==="T"?"R":"L";s.d=0;s.lastStop=null;p.mv=need===0?1:-1;s.moving=true;}}
+    }
+  });
+  // 橫移台車
+  for(const k of ["R","L"]){const p=pv[k];if(!ok)continue;
+    if(p.mv){p.y=Math.max(0,Math.min(1,p.y+p.mv*DT/PIVOT_T));if(p.carry)p.carry.moving=true;
+      if(p.y===0||p.y===1){
+        if(p.carry){const nextSeg=k==="R"?"B":"T";
+          if(clearStart(nextSeg)){p.carry.seg=nextSeg;p.carry.d=0;p.carry=null;p.mv=(p.rest>p.y)?1:-1;if(p.y===p.rest)p.mv=0;}
+          else p.mv=0;}
+        else if(p.y===p.rest)p.mv=0;}}
+    else if(p.carry){const nextSeg=k==="R"?"B":"T";
+      if(clearStart(nextSeg)){p.carry.seg=nextSeg;p.carry.d=0;p.carry=null;p.mv=p.rest>p.y?1:(p.rest<p.y?-1:0);}}
+  }
+  if(sl.some(s=>s.alarm))setErr(4);
+  render();
+}
+
+// ===================== 顯示 =====================
+function lamp(id,on,c,blink){$(id).className="dot"+(on?" "+c+(blink?" blink":""):"");}
+function render(){
+  // 橫移位置
+  for(const k of ["L","R"]){const p=pv[k];const x=k==="L"?G.pL:G.pR;const y=G.yT+(G.yB-G.yT)*p.y;
+    pvEls[k].setAttribute("transform",`translate(${x},${y})`);}
+  sl.forEach((s,i)=>{let x,y;
+    if(s.seg==="T"){x=px("T",s.d);y=G.yT;}
+    else if(s.seg==="B"){x=px("B",s.d);y=G.yB;}
+    else{const p=pv[s.seg];x=s.seg==="L"?G.pL:G.pR;y=G.yT+(G.yB-G.yT)*p.y;}
+    slEls[i].g.setAttribute("transform",`translate(${x},${y})`);
+    const r=slEls[i].r;
+    r.setAttribute("fill",s.alarm?"#e5383b":(!s.sv?"#9aa5b1":COLORS[i%COLORS.length]));
+    r.setAttribute("stroke",i===sel?"#f2994a":(s.moving?"#f4b400":"#000"));
+    r.setAttribute("stroke-width",i===sel?4:(s.moving?3:1));
+    const tr=$("tb").children[i];tr.classList.toggle("sel",i===sel);
+    tr.querySelector(".p").textContent=coord(s).toFixed(3);
+    tr.querySelector(".gp").textContent=grpName(s);
+    tr.querySelector(".pt").textContent=s.pt;
+    tr.querySelector(".sv").textContent=s.sv&&S.allSv?"ON":"OFF";
+    const [txt,c]=s.alarm?["軸警報","#e5383b"]:!(s.sv&&S.allSv)?["伺服OFF","#9aa5b1"]:s.dwell>0?["站點作業","#2f80ed"]:s.moving?["移動中","#f4b400"]:(s.tgt||S.run)?["等待前方","#f2994a"]:s.arrived?["到位","#22b14c"]:["停止","#5b6673"];
+    tr.querySelector(".stt").innerHTML=`<span class="tag" style="background:${c}">${txt}</span>`;
+  });
+  const s=sl[sel];
+  $("selId").textContent="#"+s.id;$("selPos").textContent=coord(s).toFixed(3);
+  $("selGrp").textContent=grpName(s);$("selPt").textContent=s.pt;
+  $("addr").textContent=`軸區域[${axNo(s)}]  命令 EM${20000+4*axNo(s)+36}  狀態 EM${10000+4*axNo(s)+36}`;
+  lamp("lSv",s.sv&&S.allSv,"g");lamp("lAct",true,"g");lamp("lMov",s.moving,"y");lamp("lArr",s.arrived,"g");lamp("lAlm",s.alarm,"r");
+  lamp("lJct",s.seg==="R"||s.seg==="L","b");
+  lamp("hHb",S.comm&&S.hb,"g");lamp("hAuto",S.auto,"g");lamp("hSv",S.allSv,"g");lamp("hLock",sysOk(),"g");
+  lamp("hRun",S.run,"b");lamp("hEs",S.estop,"r",true);
+  $("msg").textContent=MSG[S.err];$("msg").classList.toggle("err",S.err!==0);
+  $("bManual").className="btn"+(S.manual?" sel":"");
+  $("bRun").disabled=S.manual||S.run;
+  document.querySelectorAll(".man").forEach(b=>b.disabled=!S.manual||S.run);
+  $("bJogP").classList.toggle("press",S.jog>0);$("bJogN").classList.toggle("press",S.jog<0);
+}
+function fit(){const w=$("wrap").clientWidth;const k=Math.min(1,w/1300);$("vt").style.transform=`scale(${k})`;$("wrap").style.height=(820*k)+"px";}
+addEventListener("resize",fit);
+build();render();setInterval(step,DT*1000);
+</script>
+</body>
+</html>

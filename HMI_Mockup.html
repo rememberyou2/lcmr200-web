@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCMR200 VT 畫面預覽</title>
+<style>
+:root{
+  --bg:#1d2229; --frame:#2b3038; --panel:#eef1f4; --card:#ffffff; --line:#c8cfd8;
+  --ink:#1f2933; --sub:#5b6673; --head:#24476b; --headInk:#fff;
+  --on-g:#22b14c; --on-r:#e5383b; --on-y:#f4b400; --on-b:#2f80ed; --on-o:#f2994a; --off:#9aa5b1;
+  --btn:#dfe5ec; --btnInk:#1f2933;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"Microsoft JhengHei","Noto Sans TC",sans-serif;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px}
+.note{color:#cfd6de;font-size:13px;max-width:1280px;width:100%}
+.note b{color:#fff}
+.sim{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:#cfd6de;font-size:13px;max-width:1280px;width:100%}
+.sim button{background:#3a414b;color:#fff;border:1px solid #556;border-radius:4px;padding:4px 10px;cursor:pointer}
+.sim button.on{background:#a33}
+.wrap{width:100%;max-width:1280px}
+.vt{position:relative;width:1280px;height:800px;transform-origin:top left;background:var(--panel);border:10px solid var(--frame);border-radius:10px;overflow:hidden}
+.hdr{height:64px;background:var(--head);color:var(--headInk);display:flex;align-items:center;padding:0 20px;gap:24px}
+.hdr .t{font-size:24px;font-weight:bold}
+.hdr .clock{font-size:16px;opacity:.85}
+.hdr .msg{margin-left:auto;background:#0e2033;border-radius:4px;padding:8px 16px;min-width:420px;font-size:18px}
+.hdr .msg.err{background:var(--on-r)}
+.body{position:absolute;top:64px;bottom:80px;left:0;right:0;padding:16px 20px}
+.ftr{position:absolute;bottom:0;left:0;right:0;height:80px;background:#d5dbe2;display:flex;align-items:center;gap:12px;padding:0 20px}
+.nav{width:180px;height:56px;font-size:20px;border:2px solid #8894a3;border-radius:6px;background:var(--btn);cursor:pointer}
+.nav.cur{background:var(--head);color:#fff;border-color:var(--head)}
+.almlamp{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:18px}
+.screen{display:none;height:100%}
+.screen.cur{display:block}
+.grid{display:grid;gap:14px;height:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.card h3{margin:0 0 10px;font-size:18px;color:var(--head);border-bottom:2px solid var(--head);padding-bottom:4px}
+.lamps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px}
+.lamp{display:flex;align-items:center;gap:8px;font-size:16px}
+.dot{width:22px;height:22px;border-radius:50%;background:var(--off);border:2px solid #6b7682;flex:none}
+.dot.g{background:var(--on-g)} .dot.r{background:var(--on-r)} .dot.y{background:var(--on-y)} .dot.b{background:var(--on-b)} .dot.o{background:var(--on-o)}
+.dot.blink{animation:bl 0.6s steps(1) infinite}
+@keyframes bl{50%{background:var(--off)}}
+.num{font-family:Consolas,monospace;font-size:30px;background:#10161d;color:#7CFC9A;border-radius:4px;padding:4px 12px;text-align:right;min-width:200px;display:inline-block}
+.num.sm{font-size:20px;min-width:90px}
+.row{display:flex;align-items:center;gap:12px;margin:6px 0;font-size:16px}
+.row label{min-width:110px;color:var(--sub)}
+.btn{height:64px;min-width:150px;font-size:20px;border-radius:8px;border:2px solid #7a8696;background:var(--btn);color:var(--btnInk);cursor:pointer;user-select:none}
+.btn:active,.btn.press{filter:brightness(.85)}
+.btn.go{background:var(--on-g);color:#fff;border-color:#178a3a}
+.btn.stop{background:var(--on-r);color:#fff;border-color:#a3262a}
+.btn.sel{background:var(--on-o);color:#fff;border-color:#c06a1d}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.track{position:relative;height:46px;background:#dfe5ec;border-radius:6px;margin:8px 0 2px;border:1px solid var(--line)}
+.slider{position:absolute;top:6px;width:56px;height:32px;border-radius:4px;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;transform:translateX(-50%)}
+.s1{background:var(--on-b)} .s2{background:#8e44ad}
+.scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+input.in{font-family:Consolas,monospace;font-size:22px;width:180px;padding:6px 10px;border:2px solid var(--on-b);border-radius:4px;text-align:right}
+.bits{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.bit{display:flex;flex-direction:column;align-items:center;font-size:11px;text-align:center;gap:3px;color:var(--sub)}
+.bit .dot{width:18px;height:18px}
+.hex{font-family:Consolas,monospace;font-size:15px;color:var(--sub);float:right}
+table.alm{width:100%;border-collapse:collapse;font-size:16px}
+table.alm th,table.alm td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+table.alm th{background:#dfe5ec}
+tr.act td{background:#ffe3e3}
+</style>
+</head>
+<body>
+<div class="note"><b>VT5-W10（1280×800）畫面預覽</b> — 只是版面與動作示意，實際畫面請依 HMI_VT_Spec.md 在 VT STUDIO 製作。下方可模擬異常狀況。</div>
+<div class="sim">模擬：
+  <button id="simEstop">急停</button>
+  <button id="simAxAlm">滑塊1 軸警報</button>
+  <button id="simComm">通訊中斷</button>
+  <span id="simInfo"></span>
+</div>
+<div class="wrap" id="wrap">
+<div class="vt" id="vt">
+  <div class="hdr">
+    <div class="t">LCMR200 線性輸送模組</div>
+    <div class="clock" id="clock"></div>
+    <div class="msg" id="msg">正常</div>
+  </div>
+
+  <div class="body">
+    <!-- 畫面 0 主畫面 -->
+    <div class="screen cur" id="scr0">
+      <div class="grid" style="grid-template-columns:330px 1fr;grid-template-rows:1fr auto">
+        <div class="card" style="grid-row:span 2">
+          <h3>系統狀態</h3>
+          <div class="lamps" style="grid-template-columns:1fr">
+            <div class="lamp"><span class="dot" data-l="active:g"></span>YHX 啟動完成</div>
+            <div class="lamp"><span class="dot" data-l="comm:g"></span>通訊心跳</div>
+            <div class="lamp"><span class="dot" data-l="auto:g"></span>AUTO 模式</div>
+            <div class="lamp"><span class="dot" data-l="servoRdy:g"></span>伺服可 ON</div>
+            <div class="lamp"><span class="dot" data-l="servoOn:g"></span>全軸伺服 ON</div>
+            <div class="lamp"><span class="dot" data-l="lockOk:g"></span>允許移動</div>
+            <div class="lamp"><span class="dot" data-l="sysAlm:r"></span>系統警報</div>
+            <div class="lamp"><span class="dot" data-l="estop:r:blink"></span>急停中</div>
+            <div class="lamp"><span class="dot" data-l="ready:g"></span>可運轉</div>
+            <div class="lamp"><span class="dot" data-l="autoRun:b"></span>自動運轉中</div>
+          </div>
+          <div class="row" style="margin-top:14px"><label>步序</label><span class="num sm" id="seq">0</span></div>
+        </div>
+        <div class="card">
+          <h3>滑塊狀態</h3>
+          <div id="axCards" style="display:grid;grid-template-columns:1fr 1fr;gap:14px"></div>
+          <div class="track" id="track"><div class="slider s1" id="sl1">滑塊1</div><div class="slider s2" id="sl2">滑塊2</div></div>
+          <div class="scale"><span>0</span><span>250</span><span>500</span><span>750</span><span>1000 mm</span></div>
+        </div>
+        <div class="card">
+          <div class="btns">
+            <button class="btn go" id="bRun">自動啟動</button>
+            <button class="btn stop" id="bStop">停止</button>
+            <button class="btn" id="bReset">警報重置</button>
+            <button class="btn" id="bSvOff0">伺服 OFF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 畫面 1 手動 -->
+    <div class="screen" id="scr1">
+      <div class="grid" style="grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr">
+        <div class="card">
+          <h3>模式 / 伺服</h3>
+          <div class="btns">
+            <button class="btn" id="bManual">手動模式</button>
+            <button class="btn go" id="bSvOn">伺服 ON</button>
+            <button class="btn" id="bSvOff">伺服 OFF</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>選擇軸</h3>
+          <div class="btns">
+            <button class="btn" id="bSel1">滑塊 1</button>
+            <button class="btn" id="bSel2">滑塊 2</button>
+          </div>
+          <div class="row"><label>目前位置</label><span class="num" id="mPos">0.000</span> mm</div>
+          <div class="lamps" style="grid-template-columns:repeat(3,1fr)">
+            <div class="lamp"><span class="dot" id="mMov"></span>移動中</div>
+            <div class="lamp"><span class="dot" id="mArr"></span>到位</div>
+            <div class="lamp"><span class="dot" id="mAlm"></span>軸警報</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>定位移動</h3>
+          <div class="row"><label>目標點號</label><input class="in" id="iPoint" type="number" min="1" max="65535" value="1"></div>
+          <div class="row"><label>立即數 (mm)</label><input class="in" id="iImm" type="number" step="0.001" value="500.000"></div>
+          <div class="btns" style="margin-top:10px">
+            <button class="btn go man" id="bMove">點位移動</button>
+            <button class="btn go man" id="bMoveImm">立即數移動</button>
+          </div>
+          <div class="row" style="color:var(--sub);font-size:13px">示意點位：P1=100 P2=600 P11=300 P12=900 mm（實際以 YHX movement 檔為準）</div>
+        </div>
+        <div class="card">
+          <h3>JOG / 寸動</h3>
+          <div class="btns">
+            <button class="btn man" id="bJogN">JOG −</button>
+            <button class="btn man" id="bJogP">JOG +</button>
+          </div>
+          <div class="btns" style="margin-top:10px">
+            <button class="btn man" id="bInchN">寸動 −</button>
+            <button class="btn man" id="bInchP">寸動 +</button>
+          </div>
+          <div class="btns" style="margin-top:18px">
+            <button class="btn stop" id="bManStop" style="min-width:320px">停止</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 畫面 2 I/O 監視 -->
+    <div class="screen" id="scr2">
+      <div class="grid" style="grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);align-content:start">
+        <div class="card"><h3>系統狀態 FNOUT.W32 (EM10032)<span class="hex" id="hxSS"></span></h3><div class="bits" id="bitsSS"></div></div>
+        <div class="card"><h3>系統命令 FNIN.W32 (EM20032)<span class="hex" id="hxSC"></span></h3><div class="bits" id="bitsSC"></div></div>
+        <div class="card"><h3>軸1 狀態 FNOUT.W40 (EM10040)<span class="hex" id="hxA1S"></span></h3><div class="bits" id="bitsA1S"></div></div>
+        <div class="card"><h3>軸1 命令 FNIN.W40 (EM20040)<span class="hex" id="hxA1C"></span></h3><div class="bits" id="bitsA1C"></div></div>
+        <div class="card"><h3>軸2 狀態 FNOUT.W44 (EM10044)<span class="hex" id="hxA2S"></span></h3><div class="bits" id="bitsA2S"></div></div>
+        <div class="card"><h3>軸2 命令 FNIN.W44 (EM20044)<span class="hex" id="hxA2C"></span></h3><div class="bits" id="bitsA2C"></div></div>
+      </div>
+    </div>
+
+    <!-- 畫面 3 警報 -->
+    <div class="screen" id="scr3">
+      <div class="card" style="height:100%">
+        <h3>警報（目前 / 履歷）</h3>
+        <table class="alm"><thead><tr><th style="width:80px">代碼</th><th>訊息</th><th style="width:170px">發生</th><th style="width:170px">復歸</th></tr></thead>
+        <tbody id="almBody"></tbody></table>
+        <div class="btns" style="margin-top:14px"><button class="btn" id="bReset3">警報重置</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ftr">
+    <button class="nav cur" data-s="0">主畫面</button>
+    <button class="nav" data-s="1">手動操作</button>
+    <button class="nav" data-s="2">I/O 監視</button>
+    <button class="nav" data-s="3">警報</button>
+    <a class="nav" href="LCMR200_Screen.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit">軌道操作</a>
+    <div class="almlamp"><span class="dot" id="almLamp"></span>警報</div>
+  </div>
+</div>
+</div>
+
+<script>
+const MSG=["正常","E01 通訊心跳停止","E02 YHX 系統 / 驅動器警報","E03 軸動作逾時","E04 軸警報","E05 尚未準備好","E06 急停中","E07 滑塊不在控制範圍","E08 啟動逾時"];
+const POINT={1:100,2:600,11:300,12:900};
+const S={active:true,comm:true,auto:true,servoRdy:true,servoOn:false,lockOk:false,sysAlm:false,estop:false,
+  seq:0,err:0,manual:false,sel:1,servoReq:false,toggle:false,dwell:0,hb:false,
+  ax:[{pos:100000,tgt:null,point:0,moving:false,arrived:true,alarm:false,cmd:0},
+      {pos:300000,tgt:null,point:0,moving:false,arrived:true,alarm:false,cmd:0}],
+  jog:0, hist:[]};
+const $=id=>document.getElementById(id);
+
+// --- 畫面縮放以符合視窗寬度 ---
+function fit(){const w=$("wrap").clientWidth;const k=Math.min(1,w/1300);$("vt").style.transform=`scale(${k})`;$("wrap").style.height=(820*k)+"px";}
+addEventListener("resize",fit);fit();
+
+// --- 滑塊卡片 ---
+$("axCards").innerHTML=[1,2].map(n=>`
+ <div><div class="row"><label>滑塊${n} 位置</label><span class="num" id="pos${n}">0.000</span> mm</div>
+ <div class="row"><label>指定點號</label><span class="num sm" id="pt${n}">0</span></div>
+ <div class="lamps" style="grid-template-columns:repeat(3,1fr)">
+  <div class="lamp"><span class="dot" id="a${n}sv"></span>伺服</div>
+  <div class="lamp"><span class="dot" id="a${n}ac"></span>範圍內</div>
+  <div class="lamp"><span class="dot" id="a${n}mv"></span>移動中</div>
+  <div class="lamp"><span class="dot" id="a${n}ar"></span>到位</div>
+  <div class="lamp"><span class="dot" id="a${n}al"></span>軸警報</div>
+ </div></div>`).join("");
+
+// --- I/O 位元表 ---
+const SS=["ALL_SERVO","/LOCK","/MANUAL","HOME_BUSY","SYS_ALM","DRV_ALM","WARN","—","—","—","HOME_RDY","SERVO_RDY","ACTIVE","HEARTBEAT","E-STOP","RECORDING"];
+const SC=["ALL_SERVO","/LOCK","/MANUAL","HOME_POS","RESET","—","—","—","—","—","—","—","—","—","—","RECORD"];
+const AS=["SERVO","ORIGIN","BUSY","END","MOVING","ARRIVED","BRAKE","—","—","—","JCT_RDY","ACTIVE","AX_ALM","BATTERY","—","POS_STAT"];
+const AC=["SERVO","ORIGIN","POSITION","—","EJECT","INSERT","STOP","BRAKE","JOG+","JOG-","INCH+","INCH-","—","—","—","POS_MODE"];
+function mkBits(id,names){$(id).innerHTML=names.map((n,i)=>`<div class="bit"><span class="dot" data-b="${i}"></span>${i}<br>${n}</div>`).join("");}
+mkBits("bitsSS",SS);mkBits("bitsSC",SC);mkBits("bitsA1S",AS);mkBits("bitsA1C",AC);mkBits("bitsA2S",AS);mkBits("bitsA2C",AC);
+function showBits(id,hx,w){$(id).querySelectorAll(".dot").forEach(d=>{d.className="dot"+((w>>d.dataset.b)&1?" g":"")});$(hx).textContent="16#"+w.toString(16).toUpperCase().padStart(4,"0");}
+
+// --- 導覽 ---
+document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".nav").forEach(x=>x.classList.toggle("cur",x===b));
+  document.querySelectorAll(".screen").forEach((s,i)=>s.classList.toggle("cur",i==b.dataset.s));
+});
+
+// --- 動作 ---
+const ready=()=>S.comm&&S.auto&&S.servoOn&&S.lockOk&&!S.sysAlm&&!S.estop;
+function setErr(c){if(S.err===c)return;S.err=c;if(c){S.hist.unshift({c,t:new Date(),r:null});}}
+function startMove(i,mm,point){const a=S.ax[i];
+  if(!ready()||a.alarm||a.moving){setErr(5);return;}
+  a.tgt=mm*1000;a.point=point;a.moving=true;a.arrived=false;}
+function reset(){S.sysAlm=false;S.ax.forEach(a=>a.alarm=false);
+  if(S.comm&&!S.estop){S.hist.forEach(h=>{if(!h.r)h.r=new Date();});S.err=0;}}
+function stopAll(){S.ax.forEach(a=>{a.tgt=null;a.moving=false;a.point=0;});S.jog=0;}
+
+$("bRun").onclick=()=>{if(!S.manual&&S.err===0&&S.seq===0)S.seq=10;};
+$("bStop").onclick=()=>{stopAll();S.seq=0;};
+$("bReset").onclick=$("bReset3").onclick=reset;
+$("bSvOff0").onclick=$("bSvOff").onclick=()=>{S.servoReq=false;};
+$("bManual").onclick=()=>{if(S.seq===0)S.manual=!S.manual;};
+$("bSvOn").onclick=()=>{if(S.manual)S.servoReq=true;};
+$("bSel1").onclick=()=>S.sel=1;$("bSel2").onclick=()=>S.sel=2;
+$("bMove").onclick=()=>{const p=+$("iPoint").value;if(!(p in POINT)){alert("示意只有 P1/P2/P11/P12");return;}startMove(S.sel-1,POINT[p],p);};
+$("bMoveImm").onclick=()=>startMove(S.sel-1,+$("iImm").value,+$("iPoint").value);
+$("bManStop").onclick=stopAll;
+function hold(id,dir){const b=$(id);const on=()=>{if(S.manual&&ready())S.jog=dir;};const off=()=>S.jog=0;
+  b.onpointerdown=on;b.onpointerup=off;b.onpointerleave=off;}
+hold("bJogP",1);hold("bJogN",-1);
+$("bInchP").onclick=()=>{if(S.manual&&ready()){const a=S.ax[S.sel-1];a.pos=Math.min(1000000,a.pos+1000);}};
+$("bInchN").onclick=()=>{if(S.manual&&ready()){const a=S.ax[S.sel-1];a.pos=Math.max(0,a.pos-1000);}};
+$("simEstop").onclick=e=>{S.estop=!S.estop;e.target.classList.toggle("on",S.estop);if(S.estop){stopAll();S.servoOn=false;S.servoReq=false;}};
+$("simAxAlm").onclick=()=>{S.ax[0].alarm=true;S.ax[0].moving=false;S.ax[0].tgt=null;};
+$("simComm").onclick=e=>{S.comm=!S.comm;e.target.classList.toggle("on",!S.comm);if(!S.comm){stopAll();}};
+
+// --- 模擬掃描 (100ms) ---
+setInterval(()=>{
+  S.hb=!S.hb;
+  S.servoRdy=!S.estop&&!S.sysAlm;
+  const man=S.manual&&S.seq===0;
+  if(S.seq===20)S.servoReq=true;
+  // 錯誤判定
+  if(S.seq>=10&&!S.comm)setErr(1);
+  else if(S.estop&&(S.seq>=20||S.servoReq))setErr(6);
+  else if(S.ax.some(a=>a.alarm))setErr(4);
+  if([1,2,6].includes(S.err))S.servoReq=false;
+  if(S.err)S.seq=0;
+  S.servoOn=S.servoReq&&S.servoRdy&&S.comm;
+  S.lockOk=S.servoOn&&(S.seq>=30||man);
+  // 自動流程
+  switch(S.seq){
+    case 10: if(S.comm&&S.auto)S.seq=20;break;
+    case 20: if(S.servoOn)S.seq=30;break;
+    case 30: if(ready()){S.toggle=false;S.seq=40;}break;
+    case 40: {const p1=S.toggle?2:1,p2=S.toggle?12:11;startMove(0,POINT[p1],p1);startMove(1,POINT[p2],p2);S.seq=41;}break;
+    case 41: if(S.ax.every(a=>!a.moving&&a.arrived)){S.seq=42;S.dwell=10;}break;
+    case 42: if(--S.dwell<=0){S.toggle=!S.toggle;S.seq=40;}break;
+  }
+  // 滑塊移動
+  S.ax.forEach((a,i)=>{
+    if(!S.servoOn||!S.lockOk){if(a.moving){a.moving=false;a.tgt=null;}}
+    if(a.moving&&a.tgt!=null){const d=a.tgt-a.pos,st=20000;
+      if(Math.abs(d)<=st){a.pos=a.tgt;a.moving=false;a.arrived=true;a.tgt=null;}else a.pos+=Math.sign(d)*st;}
+    if(S.jog&&man&&S.sel===i+1&&S.lockOk){a.pos=Math.max(0,Math.min(1000000,a.pos+S.jog*5000));a.arrived=false;}
+  });
+  render();
+},100);
+
+function lamp(el,on,col,blink){el.className="dot"+(on?" "+col+(blink?" blink":""):"");}
+function render(){
+  $("clock").textContent=new Date().toLocaleString("zh-TW",{hour12:false});
+  $("msg").textContent=MSG[S.err];$("msg").classList.toggle("err",S.err!==0);
+  const v={active:S.active,comm:S.comm,auto:S.auto,servoRdy:S.servoRdy,servoOn:S.servoOn,lockOk:S.lockOk,
+    sysAlm:S.sysAlm,estop:S.estop,ready:ready(),autoRun:S.seq!==0};
+  document.querySelectorAll("[data-l]").forEach(d=>{const [k,c,b]=d.dataset.l.split(":");lamp(d,v[k],c,b);});
+  $("seq").textContent=S.seq;
+  S.ax.forEach((a,i)=>{const n=i+1;
+    $("pos"+n).textContent=(a.pos/1000).toFixed(3);$("pt"+n).textContent=a.point;
+    lamp($(`a${n}sv`),S.servoOn,"g");lamp($(`a${n}ac`),true,"g");lamp($(`a${n}mv`),a.moving||(S.jog&&S.sel===n),"y");
+    lamp($(`a${n}ar`),a.arrived,"g");lamp($(`a${n}al`),a.alarm,"r");
+    $("sl"+n).style.left=(a.pos/1000000*100)+"%";});
+  const ax=S.ax[S.sel-1];
+  $("mPos").textContent=(ax.pos/1000).toFixed(3);
+  lamp($("mMov"),ax.moving||S.jog!==0,"y");lamp($("mArr"),ax.arrived,"g");lamp($("mAlm"),ax.alarm,"r");
+  $("bManual").className="btn"+(S.manual?" sel":"");
+  $("bSel1").className="btn"+(S.sel===1?" sel":"");$("bSel2").className="btn"+(S.sel===2?" sel":"");
+  document.querySelectorAll(".man").forEach(b=>b.disabled=!S.manual);
+  $("bRun").disabled=S.manual||S.seq!==0;
+  $("bJogP").classList.toggle("press",S.jog===1);$("bJogN").classList.toggle("press",S.jog===-1);
+  lamp($("almLamp"),S.err!==0,"r",true);
+  // I/O 字
+  const ss=(S.servoOn?1:0)|(S.lockOk?2:0)|(S.auto?4:0)|(S.sysAlm?16:0)|(S.servoRdy?2048:0)|(S.active?4096:0)|(S.comm&&S.hb?8192:0)|(S.estop?16384:0);
+  const sc=(S.servoReq&&S.servoRdy?1:0)|((S.seq>=30||(S.manual&&S.servoReq))?2:0)|4;
+  showBits("bitsSS","hxSS",ss);showBits("bitsSC","hxSC",sc);
+  S.ax.forEach((a,i)=>{const n=i+1;
+    const st=(S.servoOn?1:0)|2|(a.moving?4:0)|(!a.moving?8:0)|(a.moving?16:0)|(a.arrived?32:0)|64|2048|(a.alarm?4096:0);
+    const jog=(S.jog&&S.sel===n)?(S.jog>0?256:512):0;
+    const cm=(a.moving?4:0)|jog;
+    showBits(`bitsA${n}S`,`hxA${n}S`,st);showBits(`bitsA${n}C`,`hxA${n}C`,cm);});
+  $("almBody").innerHTML=S.hist.length?S.hist.slice(0,12).map(h=>`<tr class="${h.r?"":"act"}"><td>E0${h.c}</td><td>${MSG[h.c].slice(4)}</td><td>${h.t.toLocaleTimeString("zh-TW",{hour12:false})}</td><td>${h.r?h.r.toLocaleTimeString("zh-TW",{hour12:false}):"—"}</td></tr>`).join(""):`<tr><td colspan="4" style="color:var(--sub)">無警報</td></tr>`;
+}
+render();
+</script>
+</body>
+</html>

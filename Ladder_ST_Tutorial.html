@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ST 與階梯圖對照</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#1f2933;--sub:#5b6673;--line:#d5dbe2;--head:#24476b;--on:#1fa84a;--onbg:#d7f5df;--off:#8894a3;--acc:#f2994a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft JhengHei","Noto Sans TC",sans-serif;font-size:15px}
+header{background:var(--head);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:#35608c;color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:14px}
+nav button.cur{background:var(--acc)}
+main{max-width:1500px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.card h2{margin:0 0 8px;font-size:19px;color:var(--head)}
+.card h3{margin:0 0 8px;font-size:16px;color:var(--head);display:flex;justify-content:space-between;align-items:center}
+.card h3 small{font-weight:normal;color:var(--sub);font-size:12px}
+.plain{line-height:1.75}
+.plain b{color:#b45309}
+.cols{display:grid;grid-template-columns:minmax(380px,0.9fr) 1.25fr;gap:14px}
+@media (max-width:1000px){.cols{grid-template-columns:1fr}}
+.cols>*,.panel>*{min-width:0}
+#vis,#chart{overflow-x:auto}
+pre.st{margin:0;background:#0f1720;color:#d6deeb;border-radius:8px;padding:12px 14px;font-family:Consolas,"Cascadia Mono",monospace;font-size:13.5px;line-height:1.55;overflow:auto;white-space:pre}
+.kw{color:#82aaff;font-weight:bold}.cm{color:#7fdb8a}.num{color:#f78c6c}.op{color:#ffcb6b}
+.ladwrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fbfcfd}
+svg.lad text{font-family:Consolas,"Microsoft JhengHei",sans-serif}
+.clk{cursor:pointer}
+.panel{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:1000px){.panel{grid-template-columns:1fr}}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctl button{border:2px solid #7a8696;background:#e6ebf1;border-radius:7px;padding:7px 12px;font-size:14px;cursor:pointer;user-select:none;touch-action:none}
+.ctl button.on{background:var(--on);color:#fff;border-color:#16803a}
+.ctl label{display:flex;align-items:center;gap:6px;font-size:14px}
+.ctl input{width:80px;font-family:Consolas,monospace;font-size:15px;padding:4px 6px;border:2px solid #2f80ed;border-radius:5px}
+.bits{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:6px}
+.bits button{padding:4px 2px;font-size:11px;border-radius:5px;border:1px solid #9aa5b1;background:#eef1f4;cursor:pointer}
+.bits button.on{background:var(--on);color:#fff}
+.bits button:disabled{opacity:.35;cursor:default}
+table.w{border-collapse:collapse;width:100%;font-size:13.5px}
+table.w td{border-bottom:1px solid var(--line);padding:4px 6px}
+table.w td:first-child{font-family:Consolas,monospace;color:var(--sub);width:110px}
+.lamp{display:inline-block;width:14px;height:14px;border-radius:50%;background:#c3cad3;vertical-align:-2px;margin-right:4px;border:1px solid #8894a3}
+.lamp.on{background:var(--on)}
+.hint{font-size:13px;color:var(--sub);line-height:1.6}
+.tbl{border-collapse:collapse;font-size:14px;width:100%}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.tbl th{background:#e9eef4}
+.tbl code{font-family:Consolas,monospace;background:#eef1f4;padding:1px 4px;border-radius:3px}
+.tag{display:inline-block;background:#fff4ea;color:#c06a1d;border:1px solid #f2c9a2;border-radius:10px;padding:0 8px;font-size:12px;margin-left:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>ST ⇄ 階梯圖 對照教學（LCMR200 範例）</h1>
+  <nav id="nav"></nav>
+</header>
+<main id="main"></main>
+
+<script>
+// =====================================================================
+//  迷你 PLC：裝置、階梯圖執行 (由上而下掃描)、繪圖
+// =====================================================================
+const D={};                         // 裝置值
+const TM={};                        // 計時器 {acc,q}
+const get=n=>{
+  if(typeof n==="number")return n;
+  if(n[0]==="#")return +n.slice(1);
+  if(n==="CR2002")return 1;         // KV：常時 ON
+  if(/^T\d+$/.test(n))return TM[n]?.q?1:0;
+  return D[n]??0;
+};
+const set=(n,v)=>{D[n]=v;};
+const isMR=n=>/^MR\d+$/.test(n);
+const mrBit=(base,i)=>{const num=+base.slice(2);const ch=Math.floor(num/100);return "MR"+ch+String(i).padStart(2,"0");};
+const wget=n=>{ if(isMR(n)){let v=0;for(let i=0;i<16;i++)if(get(mrBit(n,i)))v|=1<<i;return v;} return get(n); };
+const wset=(n,v)=>{ if(isMR(n)){for(let i=0;i<16;i++)set(mrBit(n,i),(v>>i)&1);return;} set(n,v); };
+const bit=(w,b)=>(get(w)>>b)&1;
+const setBit=(w,b,v)=>{let x=get(w);x=v?(x|(1<<b)):(x&~(1<<b));set(w,x);};
+
+// 運算式：NO 常開、NC 常閉、UP 上升沿、CMP 比較、SER 串聯 (AND)、PAR 並聯 (OR)
+const NO=(d)=>({t:"NO",d}), NC=(d)=>({t:"NC",d}), UP=(d)=>({t:"UP",d});
+const CMP=(a,op,b)=>({t:"CMP",a,op,b});
+const SER=(...c)=>({t:"SER",c}), PAR=(...c)=>({t:"PAR",c});
+// 輸出
+const OUT=d=>({o:"OUT",d}), SETO=d=>({o:"SET",d}), RES=d=>({o:"RES",d}), MOV=(s,d)=>({o:"MOV",s,d}), TMR=(d,k)=>({o:"TMR",d,k});
+
+function ev(e,pin){
+  let out;
+  switch(e.t){
+    case"NO": e.cond=!!get(e.d); out=pin&&e.cond; break;
+    case"NC": e.cond=!get(e.d); out=pin&&e.cond; break;
+    case"UP": {const cur=!!get(e.d); e.cond=cur&&!e.prev; e.prev=cur; out=pin&&e.cond; break;}
+    case"CMP":{const a=get(e.a),b=get(e.b);e.cond=e.op==="="?a===b:e.op==="<>"?a!==b:e.op===">"?a>b:a<b;out=pin&&e.cond;break;}
+    case"SER":{let p=pin;for(const c of e.c)p=ev(c,p);out=p;break;}
+    case"PAR":{let any=false;for(const c of e.c)any=ev(c,pin)||any;out=any;break;}
+  }
+  e.pin=pin; e.pout=out; return out;
+}
+function execOut(o,p){
+  o.p=p;
+  if(o.o==="OUT")set(o.d,p?1:0);
+  else if(o.o==="SET"){if(p)set(o.d,1);}
+  else if(o.o==="RES"){if(p)set(o.d,0);}
+  else if(o.o==="MOV"){if(p)wset(o.d,wget(o.s));}
+  else if(o.o==="TMR"){const t=TM[o.d]||(TM[o.d]={acc:0,q:false});if(p){t.acc=Math.min(t.acc+1,o.k);}else t.acc=0;t.q=t.acc>=o.k;}
+}
+function scanRungs(rungs){for(const r of rungs){const p=ev(r.in,true);for(const o of r.out)execOut(o,p);}}
+
+// ---------------- 繪圖 ----------------
+const CW=112, RH=72, LM=44, TOP=14;
+function size(e){
+  if(e.t==="SER"){e.w=0;e.h=1;for(const c of e.c){size(c);e.w+=c.w;e.h=Math.max(e.h,c.h);}}
+  else if(e.t==="PAR"){e.w=0;e.h=0;for(const c of e.c){size(c);e.w=Math.max(e.w,c.w);e.h+=c.h;}}
+  else{e.w=1;e.h=1;}
+}
+const col=on=>on?"var(--on)":"var(--off)";
+const wy=row=>TOP+row*RH+38;
+const hl=(x1,x2,y,on)=>`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col(on)}" stroke-width="${on?3.5:2}"/>`;
+const vl=(x,y1,y2,on)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${col(on)}" stroke-width="${on?3.5:2}"/>`;
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+let CM={}, CLICK=new Set();
+function devTxt(d){return esc(d);}
+function drawE(e,cx,row,W){
+  const x=LM+cx*CW, y=wy(row); let s="";
+  if(e.t==="SER"){let c=cx;for(const ch of e.c){s+=drawE(ch,c,row,ch.w);c+=ch.w;} if(c<cx+W)s+=hl(LM+c*CW,LM+(cx+W)*CW,y,e.pout); return s;}
+  if(e.t==="PAR"){let r=row,last=row;for(const ch of e.c){s+=drawE(ch,cx,r,W);last=r;r+=ch.h;}
+    s+=vl(x,y,wy(last),e.pin); s+=vl(LM+(cx+W)*CW,y,wy(last),e.pout); return s;}
+  const clk=e.d&&CLICK.has(e.d);
+  const g=clk?`<g class="clk" data-dev="${e.d}">`:"<g>";
+  s+=g;
+  if(e.t==="CMP"){
+    s+=hl(x,x+8,y,e.pin);
+    s+=`<rect x="${x+8}" y="${y-16}" width="${CW-16}" height="32" rx="4" fill="${e.cond?"var(--onbg)":"#fff"}" stroke="#55606d"/>`;
+    s+=`<text x="${x+CW/2}" y="${y+5}" text-anchor="middle" font-size="12.5">${esc(e.a)} ${esc(e.op)} ${esc(e.b)}</text>`;
+    s+=`<text x="${x+CW/2}" y="${y+30}" text-anchor="middle" font-size="10.5" fill="#5b6673">${esc(CM[e.a]||"")}</text>`;
+    s+=hl(x+CW-8,x+CW,y,e.pout);
+  }else{
+    const a=x+40,b=x+CW-40;
+    s+=`<rect x="${x}" y="${y-26}" width="${CW}" height="62" fill="transparent"/>`;
+    s+=hl(x,a,y,e.pin);
+    if(e.cond)s+=`<rect x="${a}" y="${y-12}" width="${b-a}" height="24" fill="var(--onbg)"/>`;
+    s+=`<line x1="${a}" y1="${y-13}" x2="${a}" y2="${y+13}" stroke="#2d3742" stroke-width="2.5"/><line x1="${b}" y1="${y-13}" x2="${b}" y2="${y+13}" stroke="#2d3742" stroke-width="2.5"/>`;
+    if(e.t==="NC")s+=`<line x1="${a-3}" y1="${y+13}" x2="${b+3}" y2="${y-13}" stroke="#2d3742" stroke-width="2"/>`;
+    if(e.t==="UP")s+=`<text x="${(a+b)/2}" y="${y+6}" text-anchor="middle" font-size="16" font-weight="bold">↑</text>`;
+    s+=hl(b,x+CW,y,e.pout);
+    s+=`<text x="${x+CW/2}" y="${y-17}" text-anchor="middle" font-size="12.5" font-weight="bold" fill="${clk?"#c06a1d":"#1f2933"}">${devTxt(e.d)}${clk?" ✋":""}</text>`;
+    s+=`<text x="${x+CW/2}" y="${y+28}" text-anchor="middle" font-size="10.5" fill="#5b6673">${esc(CM[e.d]||"")}</text>`;
+  }
+  if(W>1)s+=hl(x+CW,LM+(cx+W)*CW,y,e.pout);
+  return s+"</g>";
+}
+function drawOut(o,x,row){
+  const y=wy(row),on=o.p; let s="";
+  if(o.o==="OUT"){
+    const c=x+CW*0.9;
+    s+=hl(x,c-14,y,on);
+    s+=`<path d="M${c-6} ${y-14} Q${c-16} ${y} ${c-6} ${y+14} M${c+6} ${y-14} Q${c+16} ${y} ${c+6} ${y+14}" fill="none" stroke="#2d3742" stroke-width="2.5"/>`;
+    if(get(o.d))s+=`<circle cx="${c}" cy="${y}" r="7" fill="var(--on)"/>`;
+    s+=hl(c+14,x+CW*2-6,y,false);
+    s+=`<text x="${c}" y="${y-19}" text-anchor="middle" font-size="12.5" font-weight="bold">${esc(o.d)}</text>`;
+    s+=`<text x="${c}" y="${y+29}" text-anchor="middle" font-size="10.5" fill="#5b6673">${esc(CM[o.d]||"")}</text>`;
+    return s;
+  }
+  let t1,t2="";
+  if(o.o==="SET"){t1="SET  "+o.d;t2=CM[o.d]||"";}
+  else if(o.o==="RES"){t1="RES  "+o.d;t2=CM[o.d]||"";}
+  else if(o.o==="MOV"){t1=`MOV  ${o.s}  ${o.d}`;t2=(CM[o.d]?("→ "+CM[o.d]):"");}
+  else if(o.o==="TMR"){const t=TM[o.d]||{acc:0};t1=`TMR  ${o.d}  #${o.k}`;t2=`(${o.k*100}ms) 現在值 ${t.acc}`;}
+  s+=hl(x,x+12,y,on);
+  s+=`<rect x="${x+12}" y="${y-17}" width="${CW*2-24}" height="34" rx="4" fill="${on?"var(--onbg)":"#fff"}" stroke="#2d3742" stroke-width="1.5"/>`;
+  s+=`<text x="${x+CW}" y="${y+5}" text-anchor="middle" font-size="12.5" font-weight="bold">${esc(t1)}</text>`;
+  if(t2)s+=`<text x="${x+CW}" y="${y+30}" text-anchor="middle" font-size="10.5" fill="#5b6673">${esc(t2)}</text>`;
+  return s;
+}
+function drawLadder(rungs){
+  let maxW=1;for(const r of rungs){size(r.in);maxW=Math.max(maxW,r.in.w);}
+  const outX=LM+maxW*CW, RR=outX+CW*2+6;
+  let row=0,s="";
+  rungs.forEach((r,i)=>{
+    const h=Math.max(r.in.h,r.out.length);
+    const y0=wy(row);
+    s+=`<circle cx="18" cy="${y0}" r="11" fill="#24476b"/><text x="18" y="${y0+4.5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">${i+1}</text>`;
+    if(r.note)s+=`<text x="${LM+6}" y="${TOP+row*RH+6}" font-size="11" fill="#2f80ed">${esc(r.note)}</text>`;
+    s+=drawE(r.in,0,row,r.in.w);
+    s+=hl(LM+r.in.w*CW,outX,y0,r.in.pout);
+    if(r.out.length>1)s+=vl(outX,y0,wy(row+r.out.length-1),r.in.pout);
+    r.out.forEach((o,k)=>{s+=drawOut(o,outX,row+k);});
+    row+=h;
+  });
+  const H=TOP+row*RH+6;
+  s=`<line x1="${LM}" y1="4" x2="${LM}" y2="${H}" stroke="#2d3742" stroke-width="4"/><line x1="${RR}" y1="4" x2="${RR}" y2="${H}" stroke="#2d3742" stroke-width="4"/>`+s;
+  return `<svg class="lad" width="${RR+10}" height="${H+6}" viewBox="0 0 ${RR+10} ${H+6}">${s}</svg>`;
+}
+
+// ---------------- ST 上色 ----------------
+function hiST(code){
+  let h=esc(code);
+  // 註解先換成不含數字的佔位字，避免被下面的數字上色規則改到
+  const key=i=>String.fromCharCode(65+Math.floor(i/26))+String.fromCharCode(65+i%26);
+  const cms=[];h=h.replace(/\(\*[\s\S]*?\*\)/g,m=>{cms.push(m);return `\u0000${key(cms.length-1)}\u0000`;});
+  h=h.replace(/\b(IF|THEN|ELSIF|ELSE|END_IF|CASE|OF|END_CASE|FOR|TO|DO|END_FOR|AND|OR|NOT|TRUE|FALSE|EXIT|MOD)\b/g,'<span class="kw">$1</span>');
+  h=h.replace(/(16#[0-9A-Fa-f]+|T#\w+|\b\d+\b)/g,'<span class="num">$1</span>');
+  h=h.replace(/:=/g,'<span class="op">:=</span>');
+  h=h.replace(/\u0000([A-Z]{2})\u0000/g,(m,k)=>`<span class="cm">${cms[(k.charCodeAt(0)-65)*26+k.charCodeAt(1)-65]}</span>`);
+  return h;
+}
+
+// ---------------- 時序圖 ----------------
+const HIST=100;
+function drawChart(sigs,hist){
+  const W=560,RW=24,LBL=150,H=sigs.length*RW+18;
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  sigs.forEach((sg,i)=>{
+    const y0=8+i*RW, hi=y0+3, lo=y0+RW-6;
+    s+=`<text x="4" y="${y0+15}" font-size="11.5" fill="#1f2933">${esc(sg.label)}</text>`;
+    s+=`<line x1="${LBL}" y1="${lo}" x2="${W-6}" y2="${lo}" stroke="#e1e6ec"/>`;
+    const a=hist[sg.d]||[];let p="";const dx=(W-6-LBL)/HIST;
+    a.forEach((v,k)=>{const x=LBL+k*dx,y=v?hi:lo;p+=(k?`L${x} ${y}`:`M${x} ${y}`)+` L${x+dx} ${y}`;});
+    s+=`<path d="${p}" fill="none" stroke="${sg.c||"#2f80ed"}" stroke-width="2"/>`;
+  });
+  s+=`<text x="${W-8}" y="${H-2}" text-anchor="end" font-size="10" fill="#8894a3">← 過去 10 秒　現在 →</text>`;
+  return s+"</svg>";
+}
+
+// =====================================================================
+//  課程內容
+// =====================================================================
+const L=[];
+
+// ---------- 0. 怎麼看 ----------
+L.push({id:"intro",title:"0. 怎麼看",static:true,html:()=>`
+<div class="card plain"><h2>先看懂兩種寫法</h2>
+階梯圖（Ladder）是把程式畫成「電路」：左邊一條電源線、右邊一條，中間的接點（開關）如果接通，電就流到右邊的線圈，線圈就 ON。<br>
+ST（Structured Text）是把一樣的事情用「文字」寫：<b>串聯 = AND</b>、<b>並聯 = OR</b>、<b>線圈 = 「:=」指定</b>。<br>
+PLC 每一次掃描都是<b>由上而下</b>一行一行執行，執行到最後一行再從第一行開始，大約幾毫秒一輪。
+</div>
+<div class="cols">
+<div class="card"><h3>符號對照</h3>
+<table class="tbl">
+<tr><th>階梯圖</th><th>意思</th><th>ST 寫法</th></tr>
+<tr><td>─┤ ├─ 常開接點 a</td><td>裝置 ON 時接通</td><td><code>X</code></td></tr>
+<tr><td>─┤/├─ 常閉接點 b</td><td>裝置 OFF 時接通</td><td><code>NOT X</code></td></tr>
+<tr><td>─┤↑├─ 上升沿</td><td>OFF→ON 那一次掃描接通</td><td><code>X AND NOT xOld</code></td></tr>
+<tr><td>接點串聯</td><td>全部接通才通</td><td><code>A AND B</code></td></tr>
+<tr><td>接點並聯</td><td>任一接通就通</td><td><code>A OR B</code></td></tr>
+<tr><td>─( )─ 線圈 OUT</td><td>通電 ON、不通電 OFF</td><td><code>Y := 條件;</code></td></tr>
+<tr><td>SET / RES</td><td>通電時 ON / OFF，之後保持</td><td><code>IF 條件 THEN Y := TRUE; END_IF;</code></td></tr>
+<tr><td>MOV A B</td><td>把 A 的值複製到 B</td><td><code>B := A;</code></td></tr>
+<tr><td>TMR T0 #5</td><td>通電 0.5 秒後 T0 接點 ON（100ms 單位）</td><td><code>ton(IN:=條件, PT:=T#500MS);</code></td></tr>
+<tr><td>[DM1000 = #20]</td><td>比較：相等時接通</td><td><code>DM1000 = 20</code></td></tr>
+<tr><td>CR2002</td><td>KV 的「常時 ON」特殊繼電器</td><td>（不用寫）</td></tr>
+</table></div>
+<div class="card"><h3>這份範例哪裡用哪一種比較好？</h3>
+<table class="tbl">
+<tr><th>功能</th><th>建議</th><th>原因</th></tr>
+<tr><td>讀 YHX 狀態、燈號</td><td>階梯圖 / ST 都可</td><td>一個接點對一個燈，階梯圖一看就懂</td></tr>
+<tr><td>心跳、伺服 ON、警報重置</td><td>階梯圖 / ST 都可</td><td>計時器、SET/RES 是階梯圖強項</td></tr>
+<tr><td>單軸移動交握</td><td>階梯圖 / ST 都可</td><td>步序用 SET/RES 繼電器很直覺</td></tr>
+<tr><td><b>多台滑塊交通管制</b></td><td><b>ST</b></td><td>N 台 × M 站，階梯圖要寫很多行或用 Z 索引；ST 一個 FOR 迴圈</td></tr>
+<tr><td><b>畫面座標換算</b></td><td><b>ST</b></td><td>乘除很多，用算式比較好寫</td></tr>
+</table>
+<p class="hint">KV STUDIO 可以在同一個專案混用：階梯圖程式、ST 程式、在階梯圖裡呼叫 ST 寫的 FB 都可以。</p>
+<p class="hint">本頁的階梯圖是照 KV 的寫法畫的示意圖（接點、MOV、TMR、SET/RES、CR2002），幫助理解；
+實際輸入請在 KV STUDIO 的階梯圖編輯器裡畫。<br>
+<b>操作方式：</b>每一課右下有按鈕，或直接點階梯圖上有 ✋ 的接點。綠色粗線 = 有電流通過；淺綠底 = 這個接點是接通的。</p>
+</div></div>`});
+
+// ---------- 1. 讀狀態 ----------
+L.push({id:"l1",title:"1. 讀 YHX 狀態",
+ plain:`YHX 會把系統狀態放在 <b>EM10032</b> 這一個「字」（16 個位元）。每個位元代表一件事，例如 bit0 = 全軸伺服 ON、bit14 = 急停中。<br>
+階梯圖的做法：先用 <b>MOV</b> 把整個字複製到 MR2000~MR2015，之後每個位元就能當成一個接點用。<br>
+ST 的做法：用 <b>AND 遮罩</b>取出某個位元，例如 <code>16#4000</code> 就是只留下 bit14。`,
+ cm:{"EM10032":"YHX 系統狀態","MR2000":"ALL_SERVO_STATUS","MR2012":"SYSTEM_ACTIVE","MR2004":"SYSTEM_ALARM","MR2014":"E-STOP 急停","MR1204":"燈：全軸伺服ON","MR1207":"燈：急停中","MR1208":"燈：可運轉(簡化)"},
+ init(){set("EM10032",0x1001);},
+ rungs:()=>[
+  {note:"常時 ON：把狀態字拆成位元",in:NO("CR2002"),out:[MOV("EM10032","MR2000")]},
+  {in:NO("MR2000"),out:[OUT("MR1204")]},
+  {in:NO("MR2014"),out:[OUT("MR1207")]},
+  {in:SER(NO("MR2012"),NC("MR2004"),NC("MR2014")),out:[OUT("MR1208")]},
+ ],
+ st:`(* ① 階梯圖要先 MOV 拆位元；ST 直接用 AND 遮罩，不用這行 *)
+
+(* ② bit0 = ALL_SERVO_STATUS *)
+gVt_ServoOn := (gFnOut[32] AND 16#0001) <> 0;
+
+(* ③ bit14 = E-STOP_STATUS *)
+gVt_EStop   := (gFnOut[32] AND 16#4000) <> 0;
+
+(* ④ 串聯 = AND，常閉接點 = NOT *)
+gVt_Ready := ((gFnOut[32] AND 16#1000) <> 0)      (* bit12 啟動完成 *)
+         AND ((gFnOut[32] AND 16#0010) = 0)       (* bit4  沒有系統警報 *)
+         AND ((gFnOut[32] AND 16#4000) = 0);      (* bit14 沒有急停 *)
+
+(* gFnOut[32] 就是 EM10032 (陣列標籤 gFnOut 從 EM10000 開始) *)`,
+ inputs:[{type:"word",d:"EM10032",label:"YHX 送來的 EM10032（點位元切換，模擬 YHX 狀態改變）",
+   bits:["ALL_SERVO","/LOCK","/MANUAL","HOME_BUSY","SYS_ALM","DRV_ALM","WARN","","","","HOME_RDY","SERVO_RDY","ACTIVE","HEARTBEAT","E-STOP","REC"]}],
+ watch:["EM10032","MR1204","MR1207","MR1208"]});
+
+// ---------- 2. 心跳 ----------
+L.push({id:"l2",title:"2. 心跳監視",
+ plain:`YHX 正常時，EM10032 的 bit13（HEARTBEAT）每 <b>100ms</b> 會 ON/OFF 反轉一次。如果線斷了或 YHX 當機，它就不跳了（卡在 ON 或卡在 OFF）。<br>
+做法：用兩個計時器，一個量「ON 持續多久」、一個量「OFF 持續多久」。任何一個超過 <b>0.5 秒</b>，就代表心跳停了。<br>
+按下面的「模擬斷線」看看：T0 或 T1 會數到 5，然後「心跳正常」燈熄滅。`,
+ cm:{"EM10032":"YHX 系統狀態","MR2013":"HEARTBEAT","T0":"ON 太久","T1":"OFF 太久","MR1201":"心跳正常"},
+ init(){set("EM10032",0x1000);this.cut=false;},
+ sim(){ if(!this.cut)setBit("EM10032",13,!bit("EM10032",13)); },
+ rungs:()=>[
+  {in:NO("CR2002"),out:[MOV("EM10032","MR2000")]},
+  {note:"心跳 ON 持續計時",in:NO("MR2013"),out:[TMR("T0",5)]},
+  {note:"心跳 OFF 持續計時",in:NC("MR2013"),out:[TMR("T1",5)]},
+  {in:SER(NC("T0"),NC("T1")),out:[OUT("MR1201")]},
+ ],
+ st:`(* ① 拆位元：ST 直接遮罩 *)
+hb := (gFnOut[32] AND 16#2000) <> 0;      (* bit13 HEARTBEAT *)
+
+(* ② ③ 兩個計時器：ON 太久 / OFF 太久 *)
+tonHi(IN := hb,     PT := T#500MS);
+tonLo(IN := NOT hb, PT := T#500MS);
+
+(* ④ 兩個都沒逾時 = 心跳正常 *)
+gVt_CommOk := NOT tonHi.Q AND NOT tonLo.Q;
+
+(* 範例程式 FB_YhxSystem 用的是「位元 500ms 沒變化」的寫法，意思一樣 *)`,
+ inputs:[{type:"sw",label:"模擬斷線（心跳停止）",get(){return L[2].cut;},set(v){L[2].cut=v;}}],
+ watch:["MR2013","T0","T1","MR1201"],
+ chart:[{d:"MR2013",label:"HEARTBEAT (bit13)"},{d:"T0",label:"T0 ON 太久",c:"#e5383b"},{d:"T1",label:"T1 OFF 太久",c:"#e5383b"},{d:"MR1201",label:"心跳正常",c:"#1fa84a"}]});
+
+// ---------- 3. 伺服 ON ----------
+L.push({id:"l3",title:"3. 伺服 ON（SET/RES）",
+ plain:`按一下「伺服 ON」按鈕，伺服要一直保持 ON，所以要用 <b>SET</b> 把「伺服要求」MR1100 鎖住；按「伺服 OFF」或急停時用 <b>RES</b> 解除。<br>
+YHX 的 ALL_SERVO 是<b>邊緣觸發</b>（OFF→ON 那一下才會伺服 ON），所以要等 YHX 說「可以伺服 ON（ALL_SERVO_ON_READY）」才把命令位元拉 ON。<br>
+命令位元先寫到 MR2100~MR2115，最後一行用 MOV 組成一個字送到 EM20032 給 YHX。<br>
+試試：先把「YHX 可伺服 ON」關掉再按伺服 ON → 命令不會送出；再打開 → 命令送出，0.5 秒後 YHX 回報伺服 ON。`,
+ cm:{"EM10032":"YHX 系統狀態","EM20032":"給 YHX 的系統命令","MR1004":"按鈕：伺服ON","MR1005":"按鈕：伺服OFF","MR1100":"伺服要求(保持)","MR2011":"ALL_SERVO_ON_READY","MR2000":"ALL_SERVO_STATUS","MR2014":"E-STOP 急停","MR2100":"命令：ALL_SERVO","MR2102":"命令：/MANUAL(AUTO)"},
+ init(){set("EM10032",0x1800);this.rdy=true;this.es=false;this.prev=0;this.t=0;},
+ sim(){
+   let st=get("EM10032");
+   st=this.rdy&&!this.es?(st|0x0800):(st&~0x0800);
+   st=this.es?(st|0x4000):(st&~0x4000);
+   const cmd=bit("EM20032",0);
+   if(cmd&&!this.prev&&(st&0x0800))this.t=5;
+   if(this.t>0&&--this.t===0)st|=1;
+   if(!cmd||this.es){st&=~1;this.t=0;}
+   this.prev=cmd; set("EM10032",st);
+ },
+ rungs:()=>[
+  {in:NO("CR2002"),out:[MOV("EM10032","MR2000")]},
+  {note:"按伺服ON → 鎖住要求",in:NO("MR1004"),out:[SETO("MR1100")]},
+  {note:"按伺服OFF 或 急停 → 解除",in:PAR(NO("MR1005"),NO("MR2014")),out:[RES("MR1100")]},
+  {note:"有要求，且 YHX 可伺服ON(或已經ON) → 命令位元 ON",in:SER(NO("MR1100"),PAR(NO("MR2011"),NO("MR2000"))),out:[OUT("MR2100")]},
+  {note:"/MANUAL 一直 ON = AUTO 模式",in:NO("CR2002"),out:[OUT("MR2102")]},
+  {note:"把命令位元組成字送給 YHX",in:NO("CR2002"),out:[MOV("MR2100","EM20032")]},
+ ],
+ st:`(* ② SET：按伺服ON 就鎖住 *)
+IF gHmi_ServoOn THEN
+    gServoReq := TRUE;
+END_IF;
+
+(* ③ RES：按伺服OFF 或急停 就解除 *)
+IF gHmi_ServoOff OR eStop THEN
+    gServoReq := FALSE;
+END_IF;
+
+(* ④⑤⑥ 組合命令字，一次寫給 YHX *)
+cmd := 16#0004;                                   (* ⑤ bit2 /MANUAL = AUTO *)
+IF gServoReq AND (servoOnReady OR servoOn) THEN
+    cmd := cmd OR 16#0001;                        (* ④ bit0 ALL_SERVO *)
+END_IF;
+gFnIn[32] := cmd;                                 (* ⑥ = EM20032 *)`,
+ inputs:[{type:"btn",d:"MR1004",label:"伺服 ON"},{type:"btn",d:"MR1005",label:"伺服 OFF"},
+   {type:"sw",label:"YHX 可伺服 ON（主電源 OK）",get(){return L[3].rdy;},set(v){L[3].rdy=v;}},
+   {type:"sw",label:"急停",get(){return L[3].es;},set(v){L[3].es=v;}}],
+ watch:["MR1100","MR2100","EM20032","MR2000"],
+ chart:[{d:"MR1004",label:"按鈕 伺服ON"},{d:"MR1100",label:"伺服要求 MR1100",c:"#c06a1d"},{d:"MR2011",label:"YHX 可伺服ON"},{d:"MR2100",label:"命令 ALL_SERVO",c:"#c06a1d"},{d:"MR2000",label:"YHX 伺服ON",c:"#1fa84a"}]});
+
+// ---------- 4. 單軸移動交握 ----------
+L.push({id:"l4",title:"4. 移動交握（步序）",
+ plain:`叫滑塊移動到某個點號，要和 YHX「一來一往」確認，這叫<b>交握</b>：<br>
+① 先寫好目標點號，把 <b>POSITIONING</b> 拉 ON。② 等 YHX 回 <b>BUSY 或 MOVING</b> = 收到了。
+③ 等 <b>BUSY OFF 且 END、ARRIVED ON</b> = 到了，把 POSITIONING 拉 OFF。④ 等 <b>MOVING OFF</b> = 交握結束。<br>
+階梯圖用<b>步序繼電器</b>（MR3000~MR3003）：每一步用 SET 進入、RES 離開，同一時間只有一個是 ON。ST 用 <b>CASE</b> 寫一樣的事。<br>
+按「移動」，看下面的時序圖和階梯圖的步序怎麼一步一步往下走。`,
+ cm:{"EM10040":"軸1 狀態字","EM20040":"軸1 命令字","EM20041":"軸1 目標點號","DM1011":"畫面輸入點號","MR1006":"按鈕：移動","MR2202":"BUSY","MR2203":"END","MR2204":"MOVING","MR2205":"ARRIVED","MR3000":"步序① 等受理","MR3001":"步序② 移動中","MR3002":"步序③ 等MOVING掉","MR3003":"完成","MR2302":"命令：POSITIONING"},
+ init(){set("DM1011",2);set("EM10040",0x080B);this.a={busy:0,end:1,mov:0,arr:1,t:0,prev:0,lat:0,pt:0};},
+ sim(){
+   const a=this.a,pos=bit("EM20040",2);
+   if(a.lat){a.lat=0;a.busy=1;a.mov=1;a.end=0;a.arr=0;a.t=15;}
+   if(pos&&!a.prev&&!a.busy)a.lat=1;
+   if(a.busy&&--a.t<=0){a.busy=0;a.end=1;a.arr=1;a.pt=get("EM20041");}
+   if(!pos&&!a.busy&&!a.lat)a.mov=0;
+   a.prev=pos;
+   set("EM10040",1|2|(a.busy<<2)|(a.end<<3)|(a.mov<<4)|(a.arr<<5)|0x0800);
+   set("EM10041",a.pt);
+ },
+ rungs:()=>[
+  {in:NO("CR2002"),out:[MOV("EM10040","MR2200")]},
+  {note:"按移動(上升沿)，而且沒有在步序中、軸不忙",in:SER(UP("MR1006"),NC("MR3000"),NC("MR3001"),NC("MR3002"),NC("MR2202")),out:[MOV("DM1011","EM20041"),RES("MR3003"),SETO("MR3000")]},
+  {note:"① → ②：YHX 回 BUSY 或 MOVING",in:SER(NO("MR3000"),PAR(NO("MR2202"),NO("MR2204"))),out:[RES("MR3000"),SETO("MR3001")]},
+  {note:"② → ③：BUSY 掉、END 和 ARRIVED ON",in:SER(NO("MR3001"),NC("MR2202"),NO("MR2203"),NO("MR2205")),out:[RES("MR3001"),SETO("MR3002")]},
+  {note:"③ → 完成：MOVING 掉",in:SER(NO("MR3002"),NC("MR2204")),out:[RES("MR3002"),SETO("MR3003")]},
+  {note:"步序①② 期間 POSITIONING ON",in:PAR(NO("MR3000"),NO("MR3001")),out:[OUT("MR2302")]},
+  {in:NO("CR2002"),out:[MOV("MR2300","EM20040")]},
+ ],
+ st:`stat := gFnOut[40];                    (* ① 軸1 狀態字 EM10040 *)
+busy := (stat AND 16#0004) <> 0;  endB := (stat AND 16#0008) <> 0;
+moving := (stat AND 16#0010) <> 0; arrived := (stat AND 16#0020) <> 0;
+
+CASE step OF
+0:  IF moveBtn AND NOT moveOld AND NOT busy THEN    (* ② 上升沿 *)
+        gFnIn[41] := targetPoint;                    (*   寫點號 EM20041 *)
+        done := FALSE;
+        step := 10;
+    END_IF;
+10: IF busy OR moving THEN step := 20; END_IF;      (* ③ 收到了 *)
+20: IF NOT busy AND endB AND arrived THEN            (* ④ 到了 *)
+        step := 30;
+    END_IF;
+30: IF NOT moving THEN                               (* ⑤ 交握結束 *)
+        done := TRUE;  step := 0;
+    END_IF;
+END_CASE;
+moveOld := moveBtn;
+
+(* ⑥⑦ 步序 10、20 期間 POSITIONING (bit2) ON *)
+IF step = 10 OR step = 20 THEN gFnIn[40] := 16#0004;
+ELSE                           gFnIn[40] := 0;
+END_IF;
+(* 範例程式 FB_LcmAxis 就是這段，再加上逾時和警報處理 *)`,
+ inputs:[{type:"btn",d:"MR1006",label:"移動"},{type:"num",d:"DM1011",label:"目標點號"}],
+ watch:["MR3000","MR3001","MR3002","MR3003","EM20041","EM10041"],
+ chart:[{d:"MR1006",label:"按鈕 移動"},{d:"MR2302",label:"POSITIONING",c:"#c06a1d"},{d:"MR2202",label:"BUSY"},{d:"MR2203",label:"END"},{d:"MR2204",label:"MOVING"},{d:"MR2205",label:"ARRIVED"},{d:"MR3003",label:"完成",c:"#1fa84a"}]});
+
+// ---------- 5. 站點預約 ----------
+L.push({id:"l5",title:"5. 站點預約（交通管制）",
+ plain:`多台滑塊在同一條環狀線上跑，YHX 只會在快撞到時<b>發警報</b>，不會幫你排隊。所以 PLC 要自己管：<br>
+把軌道分成<b>站點</b>，用 DM2000+站點號 記錄「這一站被誰佔用」（0 = 空的）。滑塊要往下一站走之前，<b>先看下一站是不是 0</b>，是的話寫入自己的編號（預約）再出發；到了之後才把原來那站清成 0。<br>
+左下的階梯圖只寫「滑塊1 從站點2 → 站點3」<b>這一種情況</b>。如果有 6 台滑塊、7 個站，階梯圖要寫 42 種（或用 Z 索引），ST 只要一個 FOR 迴圈 → 這種邏輯建議用 ST。`,
+ cm:{"MR4000":"滑塊1 可出發","DM2003":"站點3 佔用者","EM20049":"滑塊1(軸3) 目標點號","MR4100":"滑塊1 移動要求","#0":""},
+ init(){set("MR4000",0);set("DM2003",0);set("EM20049",0);set("MR4100",0);this.ring=mkRing(4);},
+ sim(){ ringStep(this.ring); },
+ rungs:()=>[
+  {note:"滑塊1 在站點2 可出發，而且 站點3 是空的(=0)",in:SER(NO("MR4000"),CMP("DM2003","=","#0")),out:[MOV("#1","DM2003"),MOV("#3","EM20049"),SETO("MR4100")]},
+ ],
+ st:`(* 階梯圖那一行，ST 用 FOR 迴圈一次處理「每一台滑塊」 *)
+FOR i := 1 TO gCfg_SldCnt DO
+    k  := gLoop_SldSt[i];                 (* 滑塊 i 現在在第 k 站 *)
+    nx := k MOD gCfg_StCnt + 1;           (* 下一站 (最後一站接回第 1 站) *)
+
+    IF gLoop_SldPh[i] = 2                 (* 可出發 *)
+       AND gLoop_StOcc[nx] = 0 THEN       (* 下一站空著 *)
+        gLoop_StOcc[nx] := i;             (* 預約：寫入自己的編號 *)
+        gAxReq[ax].Point := gSt[nx].Point;(* 目標點號 *)
+        gAxReq[ax].Exec  := TRUE;         (* 叫它走 (交給第 4 課的交握) *)
+        gLoop_SldPh[i] := 10;             (* 移動中 *)
+    END_IF;
+
+    IF gLoop_SldPh[i] = 10 AND gAxSt[ax].Done THEN
+        gLoop_StOcc[k_from] := 0;         (* 到了才釋放原來那一站 *)
+        gLoop_SldPh[i] := 0;
+    END_IF;
+END_FOR;
+(* 完整程式：Prg_LoopCtrl.st *)`,
+ inputs:[{type:"sw",d:"MR4000",label:"滑塊1 可出發"},{type:"num",d:"DM2003",label:"站點3 佔用者 (0=空)"},
+   {type:"btn",label:"重置",act(){set("MR4100",0);set("EM20049",0);set("DM2003",0);}}],
+ watch:["DM2003","EM20049","MR4100"],
+ visual:()=>ringSvg(L[5].ring),
+ visualCtl:`<div class="ctl" style="margin-top:6px"><label>滑塊數 <input id="ringN" type="number" min="1" max="5" value="4"></label><button id="ringApply">重新開始</button><span class="hint">站點 6 個；滑塊數一定要比站點少</span></div>`});
+
+// ---------- 6. 橫移換搭 ----------
+L.push({id:"l6",title:"6. 橫移換搭",
+ plain:`滑塊從去程換到回程要靠右邊的<b>橫移</b>（GX 單軸，上面有一段 LCMR200 模組）。PLC 要照順序下命令：<br>
+① 橫移停在收點位 P102 → 叫滑塊開上橫移（P20）。② 滑塊到了、而且 <b>JUNCTION_MOVE_READY</b>（橫移可以動）ON → 叫橫移到送點位 P103。
+③ 橫移到了 → 叫滑塊開下去到回程 P11。④ JUNCTION_MOVE_READY 先 OFF（滑塊在換搭中）再 ON（滑塊已經離開）→ 叫橫移回 P102。<br>
+每一次「叫它走」都是第 4 課的交握，這裡用 MR6010 / MR6011（移動要求）和 MR6000 / MR6001（移動完成）代表。<br>
+按「開始換搭」，看右上的動畫和階梯圖步序。`,
+ cm:{"MR1020":"按鈕：開始換搭","MR6100":"橫移在收點位","MR2610":"JUNCTION_MOVE_READY","MR5001":"步序① 滑塊上橫移","MR5002":"步序② 橫移往送點","MR5003":"步序③ 滑塊下橫移","MR5004":"步序④ 橫移回收點","MR5010":"看過 JCT=OFF","MR6000":"滑塊移動完成","MR6001":"橫移移動完成","MR6010":"滑塊移動要求","MR6011":"橫移移動要求","DM6000":"滑塊目標點號","DM6001":"橫移目標點號"},
+ init(){Object.assign(this,{pv:"recv",pvT:0,pvTgt:0,pvY:0,sl:"line2",slT:0,slTgt:0,slFrom:"line2"});set("MR6100",1);set("MR2610",1);},
+ sim(){
+   set("MR6000",0);set("MR6001",0);
+   if(get("MR6010")&&!this.slT){this.slT=12;this.slTgt=get("DM6000");this.slFrom=this.sl;set("MR6010",0);}
+   if(get("MR6011")&&!this.pvT){this.pvT=12;this.pvTgt=get("DM6001");set("MR6011",0);}
+   if(this.slT&&--this.slT===0){this.sl=this.slTgt===20?"pivot":this.slTgt===11?"line3":"line2";set("MR6000",1);}
+   if(this.pvT){this.pvT--;this.pvY=this.pvTgt===103?1-this.pvT/12:this.pvT/12;if(!this.pvT){this.pv=this.pvTgt===103?"send":"recv";set("MR6001",1);}}
+   // JUNCTION_MOVE_READY：橫移在動、或滑塊正在上 / 下橫移(還沒進入固定群組) → OFF
+   const onTransfer=this.slT&&(this.slTgt===20||(this.slFrom==="pivot"&&this.slT>5));
+   set("MR2610",(!this.pvT&&!onTransfer)?1:0);
+   set("MR6100",this.pv==="recv"&&!this.pvT?1:0);
+ },
+ rungs:()=>[
+  {note:"① 按開始、橫移在收點位、JCT ON → 叫滑塊上橫移 (P20)",in:SER(UP("MR1020"),NO("MR6100"),NO("MR2610"),NC("MR5001"),NC("MR5002"),NC("MR5003"),NC("MR5004")),out:[MOV("#20","DM6000"),SETO("MR6010"),SETO("MR5001")]},
+  {note:"② 滑塊到了、JCT ON → 叫橫移到送點位 (P103)",in:SER(NO("MR5001"),NO("MR6000"),NO("MR2610")),out:[RES("MR5001"),MOV("#103","DM6001"),SETO("MR6011"),SETO("MR5002")]},
+  {note:"③ 橫移到了 → 叫滑塊下橫移 (P11)",in:SER(NO("MR5002"),NO("MR6001")),out:[RES("MR5002"),MOV("#11","DM6000"),SETO("MR6010"),SETO("MR5003")]},
+  {note:"④-1 記住「JCT 有 OFF 過」(滑塊開始離開)",in:SER(NO("MR5003"),NC("MR2610")),out:[SETO("MR5010")]},
+  {note:"④-2 JCT 又 ON (滑塊已離開) → 叫橫移回收點位 (P102)",in:SER(NO("MR5003"),NO("MR5010"),NO("MR2610")),out:[RES("MR5003"),RES("MR5010"),MOV("#102","DM6001"),SETO("MR6011"),SETO("MR5004")]},
+  {note:"⑤ 橫移回到收點位 → 換搭完成",in:SER(NO("MR5004"),NO("MR6001")),out:[RES("MR5004")]},
+ ],
+ st:`CASE pvPh OF
+0:  (* ① 橫移在收點位：滑塊可以上來 *)
+    IF startReq AND pivotAtRecv AND jctReady THEN
+        MoveSlider(20);   pvPh := 1;           (* 滑塊 → P20 *)
+    END_IF;
+1:  (* ② 滑塊到了、JCT ON → 橫移去送點位 *)
+    IF sliderDone AND jctReady THEN
+        MovePivot(103);   pvPh := 2;           (* 橫移 → P103 *)
+    END_IF;
+2:  (* ③ 橫移到了 → 滑塊下去 *)
+    IF pivotDone THEN
+        MoveSlider(11);   seenLow := FALSE;  pvPh := 3;
+    END_IF;
+3:  (* ④ JCT 先 OFF 再 ON → 滑塊離開了 → 橫移回收點位 *)
+    IF NOT jctReady THEN
+        seenLow := TRUE;
+    ELSIF seenLow THEN
+        MovePivot(102);   pvPh := 4;
+    END_IF;
+4:  (* ⑤ 橫移回到收點位 *)
+    IF pivotDone THEN pvPh := 0; END_IF;
+END_CASE;
+(* MoveSlider / MovePivot = 寫點號 + Exec，交給第 4 課的交握
+   完整程式：Prg_LoopCtrl.st 的「橫移」那一段 *)`,
+ inputs:[{type:"btn",d:"MR1020",label:"開始換搭"},{type:"btn",label:"滑塊放回去程（重來）",act(){const s=L[6];s.sl="line2";s.slT=0;s.pv="recv";s.pvT=0;s.pvY=0;["MR5001","MR5002","MR5003","MR5004","MR5010","MR6010","MR6011"].forEach(d=>set(d,0));}}],
+ watch:["DM6000","DM6001","MR6010","MR6011"],
+ visual:()=>pivotSvg(L[6]),
+ chart:[{d:"MR5001",label:"① 滑塊上橫移",c:"#c06a1d"},{d:"MR5002",label:"② 橫移往送點",c:"#c06a1d"},{d:"MR5003",label:"③ 滑塊下橫移",c:"#c06a1d"},{d:"MR5004",label:"④ 橫移回收點",c:"#c06a1d"},{d:"MR2610",label:"JUNCTION_MOVE_READY",c:"#1fa84a"},{d:"MR6000",label:"滑塊移動完成"},{d:"MR6001",label:"橫移移動完成"}]});
+
+// ---------- 第 5 課：環狀線小模擬 ----------
+function mkRing(n){const st=6;const r={st,occ:Array(st+1).fill(0),sl:[]};
+  for(let i=1;i<=n;i++){r.sl.push({id:i,k:i,ph:2,t:0,from:i,wait:Math.floor(Math.random()*6)});r.occ[i]=i;}return r;}
+function ringStep(r){
+  for(const s of r.sl){
+    if(s.ph===2){ if(s.wait>0){s.wait--;continue;}
+      const nx=s.k%r.st+1; if(r.occ[nx]===0){r.occ[nx]=s.id;s.from=s.k;s.k=nx;s.ph=10;s.t=0;} }
+    else if(s.ph===10){ if(++s.t>=10){r.occ[s.from]=0;s.ph=2;s.wait=4+Math.floor(Math.random()*8);} }
+  }
+}
+function ringSvg(r){
+  const cx=230,cy=120,rx=170,ry=82,P=k=>{const a=-Math.PI/2+(k-1)*2*Math.PI/r.st;return[cx+rx*Math.cos(a),cy+ry*Math.sin(a)];};
+  let s=`<svg width="460" height="245" viewBox="0 0 460 245"><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#cfd8e3" stroke-width="16"/>`;
+  for(let k=1;k<=r.st;k++){const[x,y]=P(k);const o=r.occ[k];
+    s+=`<circle cx="${x}" cy="${y}" r="20" fill="${o?"#fff4ea":"#fff"}" stroke="${o?"#f2994a":"#8894a3"}" stroke-width="2"/><text x="${x}" y="${y-26}" text-anchor="middle" font-size="12">站點${k}</text>`;
+    s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="11" fill="#5b6673">DM200${k} = ${o}</text>`;}
+  const C=["#2f80ed","#8e44ad","#16a085","#d35400","#2c3e50"];
+  for(const sl of r.sl){let x,y;if(sl.ph===10){const[a,b]=P(sl.from),[c,d]=P(sl.k),f=sl.t/10;x=a+(c-a)*f;y=b+(d-b)*f;}else[x,y]=P(sl.k);
+    s+=`<rect x="${x-13}" y="${y-10}" width="26" height="20" rx="4" fill="${C[(sl.id-1)%5]}"/><text x="${x}" y="${y+5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">${sl.id}</text>`;}
+  s+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="12" fill="#5b6673">順時針前進；橘色 = 被佔用或已預約</text>`;
+  return s+"</svg>";
+}
+// ---------- 第 6 課：橫移動畫 ----------
+function pivotSvg(s){
+  const yT=60,yB=170,px=360,py=yT+(yB-yT)*(s.pvT?s.pvY:(s.pv==="send"?1:0));
+  let o=`<svg width="460" height="230" viewBox="0 0 460 230">`;
+  o+=`<rect x="20" y="${yT-14}" width="300" height="28" rx="4" fill="#cfd8e3" stroke="#8894a3"/><text x="170" y="${yT-22}" text-anchor="middle" font-size="12">群組2 去程 ───▶</text>`;
+  o+=`<rect x="20" y="${yB-14}" width="300" height="28" rx="4" fill="#cfd8e3" stroke="#8894a3"/><text x="170" y="${yB+34}" text-anchor="middle" font-size="12">◀─── 群組3 回程 (P11)</text>`;
+  o+=`<line x1="${px}" y1="${yT-30}" x2="${px}" y2="${yB+30}" stroke="#9aa5b1" stroke-width="6" stroke-dasharray="6 6"/>`;
+  o+=`<rect x="${px-40}" y="${py-20}" width="80" height="40" rx="5" fill="#dfe5ec" stroke="#24476b" stroke-width="2"/><text x="${px+50}" y="${py+4}" font-size="11">右橫移</text>`;
+  o+=`<text x="${px+48}" y="${yT+4}" font-size="11" fill="#5b6673">P102 收</text><text x="${px+48}" y="${yB+4}" font-size="11" fill="#5b6673">P103 送</text>`;
+  let sx,sy;
+  if(s.slT){const f=1-s.slT/12;
+    if(s.slTgt===20){sx=280+(px-280)*f;sy=yT;}else{sx=px-(px-160)*f;sy=yB;}}
+  else if(s.sl==="line2"){sx=280;sy=yT;}else if(s.sl==="pivot"){sx=px;sy=py;}else{sx=160;sy=yB;}
+  o+=`<rect x="${sx-20}" y="${sy-12}" width="40" height="24" rx="4" fill="#2f80ed"/><text x="${sx}" y="${sy+5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">滑塊</text>`;
+  o+=`<text x="12" y="222" font-size="12" fill="${get("MR2610")?"#1fa84a":"#e5383b"}">JUNCTION_MOVE_READY = ${get("MR2610")?"ON（橫移可以動）":"OFF（不能動橫移）"}</text>`;
+  return o+"</svg>";
+}
+
+// =====================================================================
+//  頁面
+// =====================================================================
+let cur=0,timer=null,hist={},R=[];
+function show(i){
+  cur=i;const l=L[i];clearInterval(timer);
+  for(const k in D)delete D[k];for(const k in TM)delete TM[k];hist={};
+  document.querySelectorAll("nav button").forEach((b,j)=>b.classList.toggle("cur",j===i));
+  if(l.static){$m.innerHTML=l.html();return;}
+  CM=l.cm||{};CLICK=new Set(l.inputs.filter(x=>x.d&&x.type!=="num"&&x.type!=="word").map(x=>x.d));
+  l.init&&l.init.call(l);R=l.rungs();
+  $m.innerHTML=`
+  <div class="card plain"><h2>${l.title}</h2>${l.plain}</div>
+  <div class="cols">
+    <div class="card"><h3>ST 寫法 <small>圓圈數字 = 對應右邊階梯圖第幾行</small></h3><pre class="st">${hiST(l.st)}</pre></div>
+    <div class="card"><h3>階梯圖寫法 <small>由上而下每 100ms 掃描一次（示意）</small></h3><div class="ladwrap" id="lad"></div></div>
+  </div>
+  <div class="panel">
+    <div class="card"><h3>操作 <small>也可以直接點階梯圖上有 ✋ 的接點</small></h3><div id="ctl"></div>
+      <h3 style="margin-top:12px">裝置監視</h3><table class="w" id="watch"></table></div>
+    <div class="card">${l.visual?`<h3>動畫</h3><div id="vis"></div>${l.visualCtl||""}`:""}${l.chart?`<h3 style="margin-top:${l.visual?12:0}px">時序圖</h3><div id="chart"></div>`:""}${!l.visual&&!l.chart?`<h3>說明</h3><p class="hint">改變左邊的開關，看階梯圖哪些接點接通（淺綠底）、電流怎麼流（綠色粗線）、線圈有沒有 ON（實心綠點）。</p>`:""}</div>
+  </div>`;
+  buildCtl(l);
+  if(l.id==="l5"){$("ringApply").onclick=()=>{l.ring=mkRing(Math.max(1,Math.min(5,+$("ringN").value||4)));};}
+  $("lad").onclick=e=>{const g=e.target.closest("[data-dev]");if(!g)return;const inp=l.inputs.find(x=>x.d===g.dataset.dev);if(inp)trigger(inp);};
+  tick();timer=setInterval(tick,100);
+}
+const $=id=>document.getElementById(id);
+const $m=document.getElementById("main");
+function trigger(inp){
+  if(inp.type==="btn"){if(inp.act){inp.act();return;}set(inp.d,1);setTimeout(()=>set(inp.d,0),300);}
+  else if(inp.type==="sw"){const v=inp.get?inp.get():get(inp.d);inp.set?inp.set(!v):set(inp.d,v?0:1);}
+}
+function buildCtl(l){
+  let h='<div class="ctl">';
+  l.inputs.forEach((inp,i)=>{
+    if(inp.type==="btn")h+=`<button data-i="${i}" class="b">${inp.label}</button>`;
+    else if(inp.type==="sw")h+=`<button data-i="${i}" class="s">${inp.label}</button>`;
+    else if(inp.type==="num")h+=`<label>${inp.label} <input data-i="${i}" type="number" value="${get(inp.d)}"></label>`;
+  });
+  h+="</div>";
+  l.inputs.forEach((inp,i)=>{ if(inp.type==="word"){h+=`<div class="hint" style="margin-top:8px">${inp.label}</div><div class="bits" id="bits${i}">`+
+     inp.bits.map((b,k)=>`<button data-w="${i}" data-b="${k}" ${b?"":"disabled"}>${k}<br>${b||"—"}</button>`).join("")+"</div>";}});
+  $("ctl").innerHTML=h;
+  $("ctl").querySelectorAll("button.b").forEach(b=>{const inp=l.inputs[b.dataset.i];
+    if(inp.act){b.onclick=()=>inp.act();return;}
+    b.onpointerdown=()=>set(inp.d,1);b.onpointerup=b.onpointerleave=()=>set(inp.d,0);});
+  $("ctl").querySelectorAll("button.s").forEach(b=>{b.onclick=()=>trigger(l.inputs[b.dataset.i]);});
+  $("ctl").querySelectorAll("input").forEach(e=>{e.onchange=()=>set(l.inputs[e.dataset.i].d,+e.value||0);});
+  $("ctl").querySelectorAll("[data-w]").forEach(b=>{b.onclick=()=>{const inp=l.inputs[b.dataset.w];setBit(inp.d,+b.dataset.b,!bit(inp.d,+b.dataset.b));};});
+}
+function fmt(d){
+  const v=get(d);
+  if(/^(MR|T|CR)/.test(d))return `<span class="lamp ${v?"on":""}"></span>${v?"ON":"OFF"}`;
+  if(/^EM/.test(d))return `${v}　(16#${(v>>>0).toString(16).toUpperCase().padStart(4,"0")})`;
+  return String(v);
+}
+function tick(){
+  const l=L[cur];
+  l.sim&&l.sim.call(l);
+  scanRungs(R);
+  if(l.chart)for(const sg of l.chart){(hist[sg.d]||(hist[sg.d]=[])).push(get(sg.d)?1:0);if(hist[sg.d].length>HIST)hist[sg.d].shift();}
+  $("lad").innerHTML=drawLadder(R);
+  $("watch").innerHTML=l.watch.map(d=>`<tr><td>${d}</td><td>${fmt(d)}</td><td class="hint">${esc(CM[d]||"")}</td></tr>`).join("");
+  l.inputs.forEach((inp,i)=>{
+    if(inp.type==="sw"){const b=$("ctl").querySelector(`button.s[data-i="${i}"]`);if(b)b.classList.toggle("on",!!(inp.get?inp.get():get(inp.d)));}
+    if(inp.type==="btn"&&inp.d){const b=$("ctl").querySelector(`button.b[data-i="${i}"]`);if(b)b.classList.toggle("on",!!get(inp.d));}
+    if(inp.type==="word"){$("bits"+i).querySelectorAll("button").forEach(b=>b.classList.toggle("on",!!bit(inp.d,+b.dataset.b)));}
+  });
+  if(l.visual)$("vis").innerHTML=l.visual();
+  if(l.chart)$("chart").innerHTML=drawChart(l.chart,hist);
+}
+$("nav").innerHTML=L.map((l,i)=>`<button>${l.title}</button>`).join("");
+document.querySelectorAll("nav button").forEach((b,i)=>b.onclick=()=>show(i));
+show(0);
+</script>
+</body>
+</html>
