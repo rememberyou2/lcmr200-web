@@ -28,7 +28,7 @@ body{margin:0;background:var(--bg);font-family:"Microsoft JhengHei","Noto Sans T
 .msg.err{background:var(--r)}
 .main{position:absolute;top:64px;bottom:80px;left:0;right:0;display:grid;grid-template-columns:870px 1fr;gap:12px;padding:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
-.card h3{margin:0 0 8px;font-size:17px;color:var(--head);border-bottom:2px solid var(--head);padding-bottom:3px;display:flex;justify-content:space-between}
+.card h3{margin:0 0 8px;font-size:17px;color:var(--head);border-bottom:2px solid var(--head);padding-bottom:3px;display:flex;justify-content:space-between;align-items:flex-end}
 .card h3 small{font-weight:normal;color:var(--sub);font-size:12px}
 .left{display:grid;grid-template-rows:auto 1fr;gap:12px;min-height:0}
 svg text{font-family:"Microsoft JhengHei",sans-serif}
@@ -37,9 +37,9 @@ svg text{font-family:"Microsoft JhengHei",sans-serif}
 .tblwrap{overflow:auto;min-height:0;height:100%}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;white-space:nowrap}
-th{background:#dfe5ec;position:sticky;top:0}
+th{background:#dfe5ec;position:sticky;top:0;z-index:1}
 tr.sel td{background:#ffe9d6}
-tbody tr{cursor:pointer}
+#tb tr{cursor:pointer}
 .tag{display:inline-block;padding:1px 8px;border-radius:10px;color:#fff;font-size:12px}
 .dot{width:16px;height:16px;border-radius:50%;background:var(--off);border:2px solid #6b7682;display:inline-block;flex:none}
 .dot.g{background:var(--g)}.dot.r{background:var(--r)}.dot.y{background:var(--y)}.dot.b{background:var(--b)}
@@ -49,12 +49,14 @@ tbody tr{cursor:pointer}
 .big .id{font-size:26px;font-weight:bold;color:var(--o)}
 .num{font-family:Consolas,monospace;font-size:28px;background:#10161d;color:#7CFC9A;border-radius:4px;padding:2px 10px;text-align:right;min-width:170px;display:inline-block}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px;color:var(--sub)}
+.kv.k4{grid-template-columns:auto 1fr auto 1fr}
 .kv b{color:var(--ink);font-weight:normal;font-family:Consolas,monospace}
 .lamps{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;font-size:13px}
 .lamps span{display:flex;align-items:center;gap:5px}
 .row{display:flex;gap:8px;align-items:center;font-size:14px}
 .row label{min-width:78px;color:var(--sub)}
 input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8px;border:2px solid var(--b);border-radius:4px;text-align:right}
+input.in.sm{font-size:16px;width:96px}
 .btn{height:48px;flex:1;font-size:17px;border-radius:7px;border:2px solid #7a8696;background:var(--btn);color:var(--ink);cursor:pointer;user-select:none;touch-action:none}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn.go{background:var(--g);color:#fff;border-color:#178a3a}
@@ -67,6 +69,29 @@ input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8
 .ftr .sp{flex:1}
 .nav{height:56px;min-width:110px;font-size:16px;border:2px solid #8894a3;border-radius:6px;background:var(--btn);cursor:pointer;text-decoration:none;color:var(--ink);display:flex;align-items:center;justify-content:center}
 .nav.cur{background:var(--head);color:#fff;border-color:var(--head)}
+/* 分頁 */
+.tabs{display:flex;gap:4px;margin-bottom:-3px}
+.tabs button{font:inherit;font-size:15px;padding:4px 14px;border:1px solid var(--line);border-bottom:none;border-radius:6px 6px 0 0;background:#e8edf2;color:var(--sub);cursor:pointer}
+.tabs button.cur{background:var(--head);color:#fff;border-color:var(--head);font-weight:bold}
+.pane{display:none;min-height:0;flex:1;flex-direction:column;gap:6px}
+.pane.cur{display:flex}
+.pane .tblwrap{flex:1;height:auto}
+.tool{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--sub)}
+.tool .m{color:var(--r)}
+.sbtn{font:inherit;font-size:13px;padding:2px 9px;border:1px solid #7a8696;border-radius:4px;background:var(--btn);color:var(--ink);cursor:pointer}
+.sbtn:disabled{opacity:.4;cursor:not-allowed}
+.ti{font-family:Consolas,monospace;font-size:14px;width:84px;padding:1px 4px;border:1px solid #9aa5b1;border-radius:3px;text-align:right}
+.ti.s{width:58px}
+.ti.nm{width:110px;text-align:left;font-family:inherit}
+select.ti{width:auto;text-align:left;font-family:inherit}
+#ptb td{padding:3px 5px}
+#pCz{overflow:auto}
+.czg{display:grid;grid-template-columns:330px 1fr;gap:6px 18px;font-size:14px}
+.czg .kv{font-size:14px}
+.czg .lamps{grid-template-columns:repeat(2,1fr);margin-bottom:6px}
+.czg .note{grid-column:1/3;font-size:12px;color:var(--sub);line-height:1.45;background:#f5f7f9;border-radius:6px;padding:4px 10px}
+.ck{display:flex;align-items:center;gap:4px;color:var(--ink)!important;min-width:0!important}
+.toast{position:absolute;top:74px;left:50%;transform:translateX(-50%);background:#24476b;color:#fff;padding:8px 18px;border-radius:6px;font-size:16px;display:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
@@ -76,8 +101,8 @@ input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8
   回程長度 mm <input id="cfgB" type="number" min="1000" max="10000" step="100" value="3000">
   <button id="cfgApply">套用</button>
 </div>
-<div class="bar">模擬：<button id="simEstop">急停</button><button id="simAlm">選擇的滑塊發生軸警報</button><button id="simComm">通訊中斷</button>
-  <span>提示：點滑塊選擇、點站點（P1~P3、P11、P12）可把選擇的滑塊送過去（手動模式）。</span></div>
+<div class="bar">模擬：<button id="simEstop">急停</button><button id="simAlm">選擇的滑塊發生軸警報</button><button id="simComm">通訊中斷</button><button id="simProt">關閉 PLC 防碰撞（測試）</button>
+  <span>提示：點滑塊選擇；手動模式下點站點，可把選擇的滑塊送過去。點位和等待時間在下方「點位 / 等待時間」分頁修改。</span></div>
 
 <div class="wrap" id="wrap"><div class="vt" id="vt">
   <div class="hdr">
@@ -92,6 +117,7 @@ input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8
     </div>
     <div class="msg" id="msg">正常</div>
   </div>
+  <div class="toast" id="toast"></div>
 
   <div class="main">
     <div class="left">
@@ -100,27 +126,59 @@ input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8
         <svg id="trk" viewBox="0 0 846 330" width="846" height="330"></svg>
       </div>
       <div class="card" style="min-height:0;display:flex;flex-direction:column">
-        <h3>滑塊一覽 <small>點選一列即可選擇滑塊</small></h3>
-        <div class="tblwrap"><table>
-          <thead><tr><th>滑塊</th><th>軸區域</th><th>位置 (mm)</th><th>群組</th><th>點號</th><th>伺服</th><th>狀態</th></tr></thead>
-          <tbody id="tb"></tbody></table></div>
+        <h3><span class="tabs"><button data-p="pSl" class="cur">滑塊一覽</button><button data-p="pPt">點位 / 等待時間</button><button data-p="pCz">防碰撞</button></span><small id="tabHint">點選一列即可選擇滑塊</small></h3>
+
+        <div class="pane cur" id="pSl"><div class="tblwrap"><table>
+          <thead><tr><th>滑塊</th><th>軸區域</th><th>位置 (mm)</th><th>群組</th><th>點號</th><th>伺服</th><th>狀態</th><th>前方間距</th><th>防碰撞</th></tr></thead>
+          <tbody id="tb"></tbody></table></div></div>
+
+        <div class="pane" id="pPt">
+          <div class="tool"><button class="sbtn" id="ptAdd">＋ 新增點位</button><button class="sbtn" id="ptDef">恢復預設</button>
+            <span id="ptMsg">改完按 Enter 或點別處就生效。「教導」= 把選擇的滑塊目前位置寫入該點。</span></div>
+          <div class="tblwrap"><table>
+            <thead><tr><th>點號</th><th>名稱</th><th>線段</th><th>位置 mm</th><th>等待 s</th><th>自動停靠</th><th>次數</th><th>狀態</th><th></th></tr></thead>
+            <tbody id="ptb"></tbody></table></div>
+        </div>
+
+        <div class="pane" id="pCz"><div class="czg">
+          <div>
+            <div class="row"><label>最小間距</label><input class="in sm" id="czGap" type="number" min="200" max="1000" step="10"> mm</div>
+            <div class="row" style="margin-top:4px"><label>減速距離</label><input class="in sm" id="czWarn" type="number" min="200" max="3000" step="10"> mm</div>
+            <div class="row" style="margin-top:4px"><label>顯示</label><label class="ck"><input type="checkbox" id="czShow" checked> 在俯視圖畫出防碰撞區</label></div>
+          </div>
+          <div>
+            <div class="lamps">
+              <span><i class="dot" id="czProt"></i>PLC 防碰撞有效</span><span><i class="dot" id="czColl"></i>YHX 碰撞警報</span>
+              <span><i class="dot" id="czLkL"></i>左橫移入口互鎖</span><span><i class="dot" id="czLkR"></i>右橫移入口互鎖</span>
+            </div>
+            <div class="kv"><span>目前最近間距</span><b id="czNear">-</b><span>減速中</span><b id="czSlow">0 台</b><span>防碰撞停止次數</span><b id="czCnt">0</b></div>
+          </div>
+          <div class="note">
+            <b>前方間距</b> = 前車位置 − 本車位置（同一群組）。間距 ≤ <b>減速距離</b> → 降速（黃色）；間距 ≤ <b>最小間距</b> → PLC 不再送移動命令，滑塊停住等前車（紅色）。
+            橫移放回直線前，入口 0 ~ 最小間距內有滑塊就互鎖。YHX 碰撞偵測只會發警報停機，避免追撞要靠 PLC（可按上方「關閉 PLC 防碰撞」測試）。
+          </div>
+        </div></div>
       </div>
     </div>
 
     <div class="card right">
       <h3>選擇的滑塊 <small id="addr"></small></h3>
       <div class="big"><span class="id" id="selId">#1</span><span class="num" id="selPos">0.000</span> mm</div>
-      <div class="kv">
+      <div class="kv k4">
         <span>群組</span><b id="selGrp">-</b>
-        <span>指定點號輸出</span><b id="selPt">0</b>
+        <span>指定點號</span><b id="selPt">0</b>
+        <span>前方間距</span><b id="selGap">-</b>
+        <span>站點等待</span><b id="selDw">-</b>
       </div>
       <div class="lamps">
         <span><i class="dot" id="lSv"></i>伺服</span>
-        <span><i class="dot" id="lAct"></i>範圍內</span>
         <span><i class="dot" id="lMov"></i>移動中</span>
         <span><i class="dot" id="lArr"></i>到位</span>
+        <span><i class="dot" id="lDw"></i>站點作業</span>
+        <span><i class="dot" id="lSlow"></i>減速</span>
+        <span><i class="dot" id="lCz"></i>防碰撞停止</span>
+        <span><i class="dot" id="lJct"></i>在橫移上</span>
         <span><i class="dot" id="lAlm"></i>軸警報</span>
-        <span><i class="dot" id="lJct"></i>樞紐</span>
       </div>
       <div class="btns"><button class="btn man" id="bSvOn">單軸伺服 ON</button><button class="btn man" id="bSvOff">單軸伺服 OFF</button></div>
       <div class="row"><label>目標點號</label><input class="in" id="iPt" type="number" value="1"><button class="btn go man" id="bMove">點位移動</button></div>
@@ -128,10 +186,7 @@ input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8
       <div class="btns"><button class="btn man" id="bJogN">◀ JOG −</button><button class="btn man" id="bJogP">JOG + ▶</button></div>
       <div class="btns"><button class="btn man" id="bInN">寸動 −</button><button class="btn man" id="bInP">寸動 +</button></div>
       <div class="btns"><button class="btn stop" id="bStop1">停止（此滑塊）</button></div>
-      <div style="font-size:12px;color:var(--sub);line-height:1.5">
-        JOG / 寸動只在同一群組內移動，不會跨橫移。<br>
-        點位移動若目標在後方，滑塊會沿循環方向繞一圈過去。
-      </div>
+      <div style="font-size:12px;color:var(--sub)">JOG / 寸動只在同一群組內，也會遵守最小間距。</div>
     </div>
   </div>
 
@@ -152,37 +207,59 @@ input.in{font-family:Consolas,monospace;font-size:19px;width:120px;padding:3px 8
 // ===================== 設定 =====================
 const DRV_UNITS = 2;            // 驅動單元數 (兩台 GX 橫移)，座標從 DRV_UNITS*100mm 開始
 const PIVOT_LEN = 200;          // 橫移上的 LCMR200 模組長度
-const GAP = 260;                // 滑塊最小間距 (托盤長)
 const SPEED = 1200;             // 模擬速度 mm/s
+const SLOW = 0.35;              // 進入減速距離後的速度比例
+const CONTACT = 180;            // 間距小於這個值 = 真的撞到 (YHX 碰撞偵測警報)
 const PIVOT_T = 1.2;            // 橫移上下一趟秒數
-const DWELL = 1.5;              // 站點停留秒數
-const MSG = ["正常","E01 通訊心跳停止","E02 YHX 系統 / 驅動器警報","E03 軸動作逾時","E04 軸警報","E05 尚未準備好","E06 急停中","E07 滑塊不在控制範圍","E08 啟動逾時"];
+let GAP = 260;                  // 防碰撞：最小間距 (畫面可改)
+let WARN = 500;                 // 防碰撞：減速距離 (畫面可改)
+const MSG = ["正常","E01 通訊心跳停止","E02 YHX 系統 / 驅動器警報","E03 軸動作逾時","E04 軸警報","E05 尚未準備好","E06 急停中","E07 滑塊不在控制範圍","E08 啟動逾時","E09 YHX 碰撞偵測警報"];
 const COLORS = ["#2f80ed","#8e44ad","#16a085","#d35400","#2c3e50","#c0392b","#27ae60","#7f8c8d"];
+const CZ = {ok:["正常","#22b14c"],slow:["減速","#d4a000"],stop:["停止等待","#e5383b"],pivot:["等橫移","#f2994a"],lock:["入口互鎖","#e5383b"]};
+
+// 只存在這台瀏覽器 (點位表、防碰撞設定)
+const store={get(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},
+             set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 
 // ===================== 狀態 =====================
-let A,B,N,ST,sl,pv,sel=0;
-const S={comm:true,auto:true,estop:false,allSv:false,run:false,manual:false,err:0,hb:false,jog:0};
+let A,B,N,ST=null,sl,pv,sel=0;
+const S={comm:true,auto:true,estop:false,allSv:false,run:false,manual:false,err:0,hb:false,jog:0,
+         prot:true,coll:false,czCnt:0,showZone:true};
 const $=id=>document.getElementById(id);
 const NS="http://www.w3.org/2000/svg";
 const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+const lenOf=seg=>seg==="T"?A:B;
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display="none",2500);}
+
+// 點位：p 點號 / seg 線段 (T 去程, B 回程) / d 從線段起點量的位置 / wait 等待秒數 / stop 自動循環時停靠
+function defPts(){const r10=x=>Math.round(x/10)*10;return[
+  {p:1,name:"投入",seg:"T",d:r10(A*0.15),wait:1.0,stop:true},
+  {p:2,name:"加工",seg:"T",d:r10(A*0.5),wait:3.0,stop:true},
+  {p:3,name:"取出",seg:"T",d:r10(A*0.85),wait:1.0,stop:true},
+  {p:11,name:"回程緩衝",seg:"B",d:r10(B*0.35),wait:0,stop:false},
+  {p:12,name:"回程緩衝",seg:"B",d:r10(B*0.7),wait:0,stop:false}].map(x=>({...x,cnt:0}));}
+function clampPt(st){
+  st.d=Math.max(0,Math.min(lenOf(st.seg),Math.round((+st.d||0)*10)/10));
+  st.wait=Math.max(0,Math.min(99.9,Math.round((+st.wait||0)*10)/10));}
 
 function build(){
   N=Math.max(1,Math.min(16,+$("cfgN").value||6));
   A=Math.max(1000,Math.round((+$("cfgA").value||3000)/100)*100);
   B=Math.max(1000,Math.round((+$("cfgB").value||3000)/100)*100);
-  const r10=x=>Math.round(x/10)*10;
-  ST=[{p:1,name:"P1 投入",seg:"T",d:r10(A*0.15)},{p:2,name:"P2 加工",seg:"T",d:r10(A*0.5)},
-      {p:3,name:"P3 取出",seg:"T",d:r10(A*0.85)},{p:11,name:"P11 回程緩衝",seg:"B",d:r10(B*0.35)},
-      {p:12,name:"P12 回程緩衝",seg:"B",d:r10(B*0.7)}];
+  if(!ST){const s=store.get("lcmr200.pts");
+    ST=Array.isArray(s)&&s.length?s.map(x=>({name:"",seg:"T",d:0,wait:0,stop:true,...x,cnt:0})):defPts();}
+  ST.forEach(clampPt);
   // 初始：滑塊平均放在去程 / 回程
   sl=[];const nT=Math.ceil(N/2),nB=N-nT;
   for(let i=0;i<nT;i++)sl.push(mk("T",Math.min(A-GAP,100+i*Math.max(GAP+20,(A-200)/nT))));
   for(let i=0;i<nB;i++)sl.push(mk("B",Math.min(B-GAP,100+i*Math.max(GAP+20,(B-200)/nB))));
   sl.forEach((s,i)=>s.id=i+1);
-  pv={R:{y:0,carry:null,mv:0,rest:0},L:{y:1,carry:null,mv:0,rest:1}};
-  sel=0;drawStatic();fit();
+  pv={R:{y:0,carry:null,mv:0,rest:0,lock:false},L:{y:1,carry:null,mv:0,rest:1,lock:false}};
+  sel=0;S.czCnt=0;drawTrack();drawSlTable();drawPtTable();fit();
 }
-function mk(seg,d){return{seg,d,tgt:null,pt:0,dwell:0,lastStop:null,alarm:false,sv:true,moving:false,arrived:true};}
+function mk(seg,d){return{seg,d,tgt:null,pt:0,dwell:0,dwellMax:0,atSt:null,alarm:false,sv:true,moving:false,fwd:false,arrived:true,
+  gap:Infinity,cz:"ok",czPrev:"ok"};}
 
 // ===================== 座標 (依手冊 11 章標準例：群組1 左橫移→群組2 去程→群組3 回程→群組4 右橫移) =====================
 // 兩條線都是「左 −、右 +」，回程往 − 方向走 (d 從右端量起)
@@ -205,8 +282,8 @@ const axNo=s=>s.id+2;   // 軸區域 [1][2] = 橫移 GX，滑塊從 [3] 開始
 // ===================== 繪圖 =====================
 const G={x0:120,x1:726,yT:95,yB:245,pR:786,pL:60};
 const px=(seg,d)=>seg==="T"?G.x0+(G.x1-G.x0)*d/A:G.x1-(G.x1-G.x0)*d/B;
-let slEls=[],pvEls={};
-function drawStatic(){
+let slEls=[],pvEls={},lockEls={},zoneG;
+function drawTrack(){
   const svg=$("trk");svg.innerHTML="";
   // 橫移軌道
   for(const k of ["L","R"]){const x=k==="L"?G.pL:G.pR;
@@ -224,34 +301,107 @@ function drawStatic(){
       el("text",{x:(xa+xb)/2,y:y+(seg==="T"?-22:30),"text-anchor":"middle","font-size":10,fill:"#8894a3"},svg).textContent=(seg==="T"?"F":"B")+(m/100);
       d+=m;});
     // 方向箭頭
-    const ay=y+(seg==="T"?40:-40);
-    el("text",{x:(G.x0+G.x1)/2,y:ay,"text-anchor":"middle","font-size":13,fill:"#24476b"},svg).textContent=
+    el("text",{x:(G.x0+G.x1)/2,y:y+(seg==="T"?62:-58),"text-anchor":"middle","font-size":13,fill:"#24476b"},svg).textContent=
       seg==="T"?`群組2 去程 ${len}mm  ───▶`:`◀───  群組3 回程 ${len}mm`;
   }
-  // 站點
+  // 站點 (自動停靠 = 實線框；只通過 = 虛線框)
   ST.forEach(st=>{const x=px(st.seg,st.d),y=st.seg==="T"?G.yT:G.yB;
     const g=el("g",{class:"st"},svg);
     el("line",{x1:x,y1:y-26,x2:x,y2:y+26,stroke:"#f2994a","stroke-width":2,"stroke-dasharray":"3 3"},g);
     const ly=st.seg==="T"?y-50:y+50;
-    el("rect",{x:x-42,y:ly-12,width:84,height:22,rx:11,fill:"#fff4ea",stroke:"#f2994a"},g);
-    el("text",{x:x,y:ly+4,"text-anchor":"middle","font-size":12,fill:"#c06a1d"},g).textContent=st.name;
+    const label=`P${st.p} ${st.name}`+(st.stop?` · ${st.wait.toFixed(1)}s`:"");
+    const w=Math.max(60,[...label].reduce((a,c)=>a+(c.charCodeAt(0)>255?12:7),0)+16);
+    el("rect",{x:x-w/2,y:ly-12,width:w,height:22,rx:11,fill:st.stop?"#fff4ea":"#fff",stroke:"#f2994a","stroke-dasharray":st.stop?"":"4 3"},g);
+    el("text",{x:x,y:ly+4,"text-anchor":"middle","font-size":12,fill:"#c06a1d"},g).textContent=label;
     g.onclick=()=>cmdPoint(st.p);});
+  // 防碰撞區 (每次 render 重畫)
+  zoneG=el("g",{},svg);
   // 橫移台車
-  pvEls={};
+  pvEls={};lockEls={};
   for(const k of ["L","R"]){const g=el("g",{},svg);
     el("rect",{x:-38,y:-20,width:76,height:40,rx:5,fill:"#dfe5ec",stroke:"#24476b","stroke-width":2},g);
     el("rect",{x:-34,y:-12,width:68,height:24,rx:3,fill:"#cfd8e3",stroke:"#8894a3"},g);
+    lockEls[k]=el("text",{x:0,y:-26,"text-anchor":"middle","font-size":12,"font-weight":"bold",fill:"#e5383b",display:"none"},g);
+    lockEls[k].textContent="入口互鎖";
     pvEls[k]=g;}
-  // 滑塊
+  // 滑塊 (含站點等待進度條)
   slEls=sl.map((s,i)=>{const g=el("g",{class:"sl"},svg);
     const r=el("rect",{x:-22,y:-13,width:44,height:26,rx:4,fill:COLORS[i%COLORS.length],stroke:"#000","stroke-width":1},g);
     const t=el("text",{x:0,y:5,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"#fff"},g);t.textContent=s.id;
-    g.onclick=()=>{sel=i;};return{g,r};});
-  // 表格
-  $("tb").innerHTML=sl.map((s,i)=>`<tr data-i="${i}"><td>#${s.id}</td><td>[${axNo(s)}] W${4*axNo(s)+36}</td><td class="p"></td><td class="gp"></td><td class="pt"></td><td class="sv"></td><td class="stt"></td></tr>`).join("");
-  $("tb").querySelectorAll("tr").forEach(tr=>tr.onclick=()=>sel=+tr.dataset.i);
+    const bb=el("rect",{x:-22,y:18,width:44,height:5,fill:"#c8cfd8",display:"none"},g);
+    const bf=el("rect",{x:-22,y:18,width:44,height:5,fill:"#2f80ed",display:"none"},g);
+    const dt=el("text",{x:0,y:34,"text-anchor":"middle","font-size":11,"font-weight":"bold",fill:"#2f80ed",display:"none"},g);
+    g.onclick=()=>{sel=i;};return{g,r,bb,bf,dt};});
   $("trackInfo").textContent=`滑塊 ${N} 台、去程 ${A}mm、回程 ${B}mm、軸區域 [1][2] 為左 / 右橫移 GX，滑塊從 [3] 開始`;
 }
+function drawSlTable(){
+  $("tb").innerHTML=sl.map((s,i)=>`<tr data-i="${i}"><td>#${s.id}</td><td>[${axNo(s)}] W${4*axNo(s)+36}</td><td class="p"></td><td class="gp"></td><td class="pt"></td><td class="sv"></td><td class="stt"></td><td class="gap"></td><td class="cz"></td></tr>`).join("");
+  $("tb").querySelectorAll("tr").forEach(tr=>tr.onclick=()=>sel=+tr.dataset.i);
+}
+
+// ===================== 點位表 =====================
+function drawPtTable(){
+  $("ptb").innerHTML=ST.map((st,i)=>`<tr data-i="${i}">
+    <td><input class="ti s" data-k="p" type="number" min="1" max="255" value="${st.p}"></td>
+    <td><input class="ti nm" data-k="name" maxlength="8" value="${esc(st.name)}"></td>
+    <td><select class="ti" data-k="seg"><option value="T"${st.seg==="T"?" selected":""}>群組2 去程</option><option value="B"${st.seg==="B"?" selected":""}>群組3 回程</option></select></td>
+    <td><input class="ti" data-k="d" type="number" step="0.1" min="0" value="${st.d.toFixed(1)}"></td>
+    <td><input class="ti s" data-k="wait" type="number" step="0.1" min="0" max="99.9" value="${st.wait.toFixed(1)}"></td>
+    <td style="text-align:center"><input type="checkbox" data-k="stop"${st.stop?" checked":""}></td>
+    <td class="cnt"></td><td class="pst"></td>
+    <td><button class="sbtn" data-a="teach">教導</button> <button class="sbtn" data-a="del">刪除</button></td></tr>`).join("");
+  $("ptb").querySelectorAll("tr").forEach(tr=>{const st=ST[+tr.dataset.i];
+    tr.querySelectorAll("[data-k]").forEach(inp=>inp.onchange=()=>editPt(st,inp));
+    tr.querySelector('[data-a="teach"]').onclick=()=>teachPt(st);
+    tr.querySelector('[data-a="del"]').onclick=()=>{
+      if(sl.some(s=>s.atSt===st)){ptMsg(`P${st.p} 正在作業，不能刪除`,true);return;}
+      ST.splice(ST.indexOf(st),1);ptChanged(true);ptMsg(`已刪除 P${st.p}`);};
+  });
+}
+function ptMsg(t,bad){const e=$("ptMsg");e.textContent=t;e.className=bad?"m":"";}
+function editPt(st,inp){const k=inp.dataset.k;
+  if(k==="p"){const v=Math.round(+inp.value);
+    if(!(v>=1&&v<=255)||ST.some(o=>o!==st&&o.p===v)){inp.value=st.p;ptMsg("點號重複或超出範圍 (1~255)",true);return;}
+    st.p=v;}
+  else if(k==="name")st.name=inp.value.trim();
+  else if(k==="seg")st.seg=inp.value;
+  else if(k==="d")st.d=+inp.value;
+  else if(k==="wait")st.wait=+inp.value;
+  else if(k==="stop")st.stop=inp.checked;
+  ptChanged(k==="seg"||k==="d"||k==="wait");}
+function teachPt(st){const s=sl[sel];
+  if(s.seg!=="T"&&s.seg!=="B"){ptMsg(`滑塊 #${s.id} 在橫移上，不能教導`,true);return;}
+  st.seg=s.seg;st.d=s.d;ptChanged(true);ptMsg(`P${st.p} ← 滑塊 #${s.id} 目前位置 ${st.d.toFixed(1)} mm`);}
+function ptChanged(rebuild){
+  ST.forEach(clampPt);
+  store.set("lcmr200.pts",ST.map(({cnt,...x})=>x));
+  drawTrack();if(rebuild)drawPtTable();}
+$("ptAdd").onclick=()=>{let p=1;while(ST.some(x=>x.p===p))p++;
+  const s=sl[sel],onLine=s.seg==="T"||s.seg==="B";
+  ST.push({p,name:"新點位",seg:onLine?s.seg:"T",d:onLine?s.d:A/2,wait:2.0,stop:true,cnt:0});
+  ptChanged(true);ptMsg(`已新增 P${p}（位置取自滑塊 #${s.id}）`);
+  const w=$("ptb").closest(".tblwrap");w.scrollTop=w.scrollHeight;};
+$("ptDef").onclick=()=>{if(sl.some(s=>s.atSt)){ptMsg("有滑塊正在站點作業，請先停止",true);return;}
+  ST=defPts();ptChanged(true);ptMsg("已恢復預設點位");};
+
+// ===================== 分頁 =====================
+const HINT={pSl:"點選一列即可選擇滑塊",pPt:"對應 PLC：gSt[n].Point / gSt[n].Dwell（存在 PLC，掉電保持）",pCz:"間距判斷在 PLC 做，YHX 碰撞偵測只是最後保護"};
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("cur",x===b));
+  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("cur",p.id===b.dataset.p));
+  $("tabHint").textContent=HINT[b.dataset.p];});
+
+// ===================== 防碰撞設定 =====================
+(function(){const c=store.get("lcmr200.cz");
+  if(c){GAP=Math.max(200,Math.min(1000,+c.gap||260));WARN=Math.max(GAP,Math.min(3000,+c.warn||500));S.showZone=c.show!==false;}
+  $("czGap").value=GAP;$("czWarn").value=WARN;$("czShow").checked=S.showZone;})();
+function czChanged(){
+  GAP=Math.max(200,Math.min(1000,Math.round(+$("czGap").value||260)));
+  WARN=Math.max(GAP,Math.min(3000,Math.round(+$("czWarn").value||500)));
+  S.showZone=$("czShow").checked;
+  $("czGap").value=GAP;$("czWarn").value=WARN;
+  store.set("lcmr200.cz",{gap:GAP,warn:WARN,show:S.showZone});}
+$("czGap").onchange=czChanged;$("czWarn").onchange=czChanged;$("czShow").onchange=czChanged;
 
 // ===================== 命令 =====================
 const sysOk=()=>S.comm&&S.auto&&S.allSv&&!S.estop;
@@ -259,123 +409,194 @@ const canMan=()=>S.manual&&!S.run&&sysOk();
 function setErr(c){if(!S.err)S.err=c;}
 function cmdPoint(p){const s=sl[sel];const st=ST.find(x=>x.p===p);
   if(!canMan()||!s.sv||s.alarm){setErr(5);return;}
-  if(!st){alert("示意點位只有 P1、P2、P3、P11、P12");return;}
+  if(!st){toast(`沒有 P${p}，請先在「點位 / 等待時間」新增`);return;}
   s.tgt={seg:st.seg,d:st.d};s.pt=p;s.arrived=false;}
 function cmdImm(c){const s=sl[sel];const t=fromCoord(c);
   if(!canMan()||!s.sv||s.alarm){setErr(5);return;}
-  if(!t){alert("目標座標不在去程 / 回程群組範圍內");return;}
+  if(!t){toast("目標座標不在去程 / 回程群組範圍內");return;}
   s.tgt=t;s.pt=+$("iPt").value||0;s.arrived=false;}
+const quit=s=>{s.tgt=null;s.atSt=null;s.dwell=0;};
 
 $("bMove").onclick=()=>cmdPoint(+$("iPt").value);
 $("bImm").onclick=()=>cmdImm(+$("iImm").value);
-$("bStop1").onclick=()=>{const s=sl[sel];s.tgt=null;s.pt=0;S.jog=0;};
+$("bStop1").onclick=()=>{const s=sl[sel];quit(s);s.pt=0;S.jog=0;};
 $("bSvOn").onclick=()=>{if(S.manual&&!sl[sel].alarm)sl[sel].sv=true;};
-$("bSvOff").onclick=()=>{const s=sl[sel];s.sv=false;s.tgt=null;s.pt=0;};
+$("bSvOff").onclick=()=>{const s=sl[sel];s.sv=false;quit(s);s.pt=0;};
 $("bInP").onclick=()=>inch(10);$("bInN").onclick=()=>inch(-10);
 function inch(v){const s=sl[sel];if(!canMan()||!s.sv||s.alarm||s.seg==="R"||s.seg==="L")return;
-  const len=s.seg==="T"?A:B;s.d=Math.max(0,Math.min(len,s.d+v));s.arrived=false;}
+  const m=v>0?Math.min(v,blockedAhead(s,lenOf(s.seg))):-Math.min(-v,blockedBehind(s));
+  if(Math.abs(m)<0.01){toast("防碰撞：與前後滑塊已到最小間距");return;}
+  s.d+=m;s.arrived=false;}
 function hold(id,dir){const b=$(id);const on=()=>{if(canMan())S.jog=dir;};const off=()=>S.jog=0;
   b.onpointerdown=on;b.onpointerup=off;b.onpointerleave=off;}
 hold("bJogP",1);hold("bJogN",-1);
 $("bRun").onclick=()=>{if(S.manual||S.err)return;if(!S.allSv)S.allSv=true;S.run=true;};
-$("bStopAll").onclick=()=>{S.run=false;S.jog=0;sl.forEach(s=>{s.tgt=null;s.dwell=0;});};
-$("bReset").onclick=()=>{sl.forEach(s=>{if(s.alarm){s.alarm=false;}});if(S.comm&&!S.estop)S.err=0;};
+$("bStopAll").onclick=()=>{S.run=false;S.jog=0;sl.forEach(quit);};
+$("bReset").onclick=()=>{sl.forEach(s=>{s.alarm=false;});S.coll=false;if(S.comm&&!S.estop)S.err=0;};
 $("bManual").onclick=()=>{if(!S.run)S.manual=!S.manual;};
 $("bAllSv").onclick=()=>{if(!S.estop&&S.comm){S.allSv=true;sl.forEach(s=>{if(!s.alarm)s.sv=true;});}};
 $("bAllSvOff").onclick=()=>{S.allSv=false;S.run=false;};
 $("simEstop").onclick=e=>{S.estop=!S.estop;e.target.classList.toggle("on",S.estop);if(S.estop){S.allSv=false;S.run=false;setErr(6);}};
-$("simAlm").onclick=()=>{const s=sl[sel];s.alarm=true;s.tgt=null;setErr(4);};
+$("simAlm").onclick=()=>{const s=sl[sel];s.alarm=true;quit(s);setErr(4);};
 $("simComm").onclick=e=>{S.comm=!S.comm;e.target.classList.toggle("on",!S.comm);if(!S.comm){S.run=false;S.allSv=false;setErr(1);}};
-$("cfgApply").onclick=()=>{S.run=false;S.err=0;build();};
+$("simProt").onclick=e=>{S.prot=!S.prot;e.target.classList.toggle("on",!S.prot);
+  e.target.textContent=S.prot?"關閉 PLC 防碰撞（測試）":"恢復 PLC 防碰撞";
+  toast(S.prot?"PLC 防碰撞已恢復":"PLC 防碰撞已關閉：滑塊會追撞，YHX 只能事後發碰撞警報");};
+$("cfgApply").onclick=()=>{S.run=false;S.err=0;S.coll=false;build();};
 
 // ===================== 模擬 =====================
 const DT=0.05;
-function blockedAhead(s,len){ // 同群組前方最近滑塊允許的最大前進量
-  let lim=len-s.d;
-  for(const o of sl)if(o!==s&&o.seg===s.seg&&o.d>s.d)lim=Math.min(lim,o.d-s.d-GAP);
-  return Math.max(0,lim);
-}
-function clearStart(seg){return sl.every(o=>o.seg!==seg||o.d>=GAP);}
-function nextStation(s){
-  return ST.filter(st=>st.seg===s.seg&&st.p<10&&st.d>s.d+0.5&&st.d!==s.lastStop).sort((a,b)=>a.d-b.d)[0];
-}
+function frontOf(s){let f=null;for(const o of sl)if(o!==s&&o.seg===s.seg&&o.d>s.d&&(!f||o.d<f.d))f=o;return f;}
+function blockedAhead(s,len){ // 允許的最大前進量：線段尾端，或 (防碰撞有效時) 前車 − 最小間距
+  let lim=len-s.d;const f=frontOf(s);
+  if(f&&S.prot)lim=Math.min(lim,f.d-s.d-GAP);
+  return Math.max(0,lim);}
+function blockedBehind(s){let lim=s.d;
+  for(const o of sl)if(o!==s&&o.seg===s.seg&&o.d<s.d)lim=Math.min(lim,s.d-o.d-GAP);
+  return Math.max(0,lim);}
+function clearStart(seg){return !S.prot||sl.every(o=>o.seg!==seg||o.d>=GAP);}   // 橫移入口互鎖
+function nextStation(s){return ST.filter(st=>st.stop&&st.seg===s.seg&&st.d>s.d+0.5).sort((a,b)=>a.d-b.d)[0];}
+function move(s,m){s.d+=m;s.moving=true;s.fwd=m>0;s.arrived=false;}
+function arrive(s,stop){s.arrived=true;
+  if(stop.kind==="tgt")s.tgt=null;
+  else{s.pt=stop.st.p;s.atSt=stop.st;s.dwell=s.dwellMax=stop.st.wait;}}
 function step(){
   S.hb=!S.hb;
   const ok=sysOk();
-  // 自動循環時每台滑塊自己往前，到站停留
-  sl.forEach(s=>{s.moving=false;
+  sl.forEach(s=>{s.czPrev=s.cz;s.cz="ok";s.moving=false;s.fwd=false;const f=frontOf(s);s.gap=f?f.d-s.d:Infinity;});
+  sl.forEach(s=>{
     if(!ok||!s.sv||s.alarm)return;
-    if(s.dwell>0){s.dwell-=DT;return;}
-    const want=S.run||s.tgt;
-    if(s.seg==="T"||s.seg==="B"){
-      const len=s.seg==="T"?A:B;
-      // JOG (手動、選擇的滑塊)
-      if(!S.run&&S.jog&&sl[sel]===s){
-        if(S.jog>0){const m=Math.min(SPEED*0.4*DT,blockedAhead(s,len));if(m>0){s.d+=m;s.moving=true;s.arrived=false;}}
-        else{let lim=s.d;for(const o of sl)if(o!==s&&o.seg===s.seg&&o.d<s.d)lim=Math.min(lim,s.d-o.d-GAP);
-          const m=Math.min(SPEED*0.4*DT,Math.max(0,lim));if(m>0){s.d-=m;s.moving=true;s.arrived=false;}}
-        return;}
-      if(!want)return;
-      let mv=Math.min(SPEED*DT,blockedAhead(s,len));
-      // 目標 / 站點
-      let stop=null;
-      if(s.tgt&&s.tgt.seg===s.seg&&s.tgt.d>=s.d)stop={d:s.tgt.d,kind:"tgt"};
-      else if(S.run){const st=nextStation(s);if(st)stop={d:st.d,kind:"st",p:st.p};}
-      if(stop&&s.d+mv>=stop.d){mv=stop.d-s.d;}
-      if(mv>0.01){s.d+=mv;s.moving=true;s.arrived=false;}
-      if(stop&&Math.abs(s.d-stop.d)<0.01){
-        if(stop.kind==="tgt"){s.tgt=null;s.arrived=true;}
-        else{s.dwell=DWELL;s.lastStop=stop.d;s.pt=stop.p;s.arrived=true;}
-        return;}
-      // 到群組尾端 → 上橫移
-      if(s.d>=len-0.01){const p=s.seg==="T"?pv.R:pv.L;const need=s.seg==="T"?0:1;
-        if(p.carry===null&&p.mv===0&&Math.abs(p.y-need)<0.001){p.carry=s;s.seg=s.seg==="T"?"R":"L";s.d=0;s.lastStop=null;p.mv=need===0?1:-1;s.moving=true;}}
-    }
+    // 站點作業：等待時間倒數，結束才放行
+    if(s.atSt){if(s.dwell>0){s.dwell=Math.max(0,s.dwell-DT);if(s.dwell>0)return;}
+      s.atSt.cnt++;s.atSt=null;return;}
+    if(s.seg!=="T"&&s.seg!=="B")return;
+    const len=lenOf(s.seg);
+    // JOG (手動、選擇的滑塊)
+    if(!S.run&&S.jog&&sl[sel]===s){const v=SPEED*0.4*DT;
+      if(S.jog>0){const lim=blockedAhead(s,len),m=Math.min(v,lim);
+        if(m>0.01)move(s,m);else if(s.d<len-0.01)s.cz="stop";}
+      else{const m=Math.min(v,blockedBehind(s));if(m>0.01)move(s,-m);}
+      return;}
+    if(!(S.run||s.tgt))return;
+    // 目標 / 站點
+    let stop=null;
+    if(s.tgt&&s.tgt.seg===s.seg&&s.tgt.d>=s.d-0.01)stop={d:s.tgt.d,kind:"tgt"};
+    else if(S.run){const st=nextStation(s);if(st)stop={d:st.d,kind:"st",st};}
+    if(stop&&Math.abs(s.d-stop.d)<0.01){arrive(s,stop);return;}
+    let v=SPEED*DT;
+    if(S.prot&&s.gap<=WARN){v*=SLOW;s.cz="slow";}
+    const lim=blockedAhead(s,len);
+    let mv=Math.min(v,lim);
+    if(stop&&s.d+mv>=stop.d)mv=stop.d-s.d;
+    if(mv>0.01){move(s,mv);if(stop&&Math.abs(s.d-stop.d)<0.01)arrive(s,stop);return;}
+    // 到群組尾端 → 上橫移
+    if(s.d>=len-0.01){const p=s.seg==="T"?pv.R:pv.L;const need=s.seg==="T"?0:1;
+      if(p.carry===null&&p.mv===0&&Math.abs(p.y-need)<0.001){p.carry=s;s.seg=s.seg==="T"?"R":"L";s.d=0;p.mv=need===0?1:-1;s.moving=true;}
+      else s.cz="pivot";}
+    else if(lim<v)s.cz="stop";
   });
-  // 橫移台車
-  for(const k of ["R","L"]){const p=pv[k];if(!ok)continue;
+  // 橫移台車 (放回直線前檢查入口互鎖)
+  for(const k of ["R","L"]){const p=pv[k];p.lock=false;if(!ok)continue;const nextSeg=k==="R"?"B":"T";
     if(p.mv){p.y=Math.max(0,Math.min(1,p.y+p.mv*DT/PIVOT_T));if(p.carry)p.carry.moving=true;
       if(p.y===0||p.y===1){
-        if(p.carry){const nextSeg=k==="R"?"B":"T";
+        if(p.carry){
           if(clearStart(nextSeg)){p.carry.seg=nextSeg;p.carry.d=0;p.carry=null;p.mv=(p.rest>p.y)?1:-1;if(p.y===p.rest)p.mv=0;}
-          else p.mv=0;}
+          else{p.mv=0;p.lock=true;p.carry.cz="lock";}}
         else if(p.y===p.rest)p.mv=0;}}
-    else if(p.carry){const nextSeg=k==="R"?"B":"T";
-      if(clearStart(nextSeg)){p.carry.seg=nextSeg;p.carry.d=0;p.carry=null;p.mv=p.rest>p.y?1:(p.rest<p.y?-1:0);}}
+    else if(p.carry){
+      if(clearStart(nextSeg)){p.carry.seg=nextSeg;p.carry.d=0;p.carry=null;p.mv=p.rest>p.y?1:(p.rest<p.y?-1:0);}
+      else{p.lock=true;p.carry.cz="lock";}}
   }
+  // YHX 碰撞偵測：真的撞到才報警 (防碰撞有效時不會發生)
+  for(const s of sl){if(!s.fwd)continue;const f=frontOf(s);
+    if(f&&f.d-s.d<CONTACT){s.alarm=f.alarm=true;quit(s);quit(f);S.coll=true;S.run=false;setErr(9);}}
+  sl.forEach(s=>{if(s.cz==="stop"&&s.czPrev!=="stop")S.czCnt++;});
   if(sl.some(s=>s.alarm))setErr(4);
   render();
 }
 
 // ===================== 顯示 =====================
 function lamp(id,on,c,blink){$(id).className="dot"+(on?" "+c+(blink?" blink":""):"");}
+const czKey=s=>!S.prot?null:s.cz;
+const gapTxt=g=>isFinite(g)?Math.round(g)+" mm":"—";
+const gapCol=g=>g<=GAP+0.5?"#c0262a":g<=WARN?"#9a6b00":"";
+function setHTML(e,h){if(e._h!==h){e._h=h;e.innerHTML=h;}}
 function render(){
   // 橫移位置
   for(const k of ["L","R"]){const p=pv[k];const x=k==="L"?G.pL:G.pR;const y=G.yT+(G.yB-G.yT)*p.y;
-    pvEls[k].setAttribute("transform",`translate(${x},${y})`);}
+    pvEls[k].setAttribute("transform",`translate(${x},${y})`);
+    lockEls[k].setAttribute("display",p.lock?"":"none");}
+  // 防碰撞區：深色 = 最小間距，淺色 = 減速距離；顏色 綠 正常 / 黃 減速 / 紅 停止
+  zoneG.innerHTML="";
+  if(S.showZone&&S.prot)sl.forEach(s=>{if(s.seg!=="T"&&s.seg!=="B")return;
+    const y=s.seg==="T"?G.yT:G.yB,len=lenOf(s.seg);
+    const c=s.cz==="stop"||s.cz==="lock"?"#e5383b":s.cz==="slow"||s.gap<=WARN?"#f4b400":"#22b14c";
+    const xa=px(s.seg,s.d),xw=px(s.seg,Math.min(len,s.d+WARN)),xg=px(s.seg,Math.min(len,s.d+GAP));
+    el("rect",{x:Math.min(xa,xw),y:y-11,width:Math.abs(xw-xa),height:22,fill:c,"fill-opacity":.14},zoneG);
+    el("rect",{x:Math.min(xa,xg),y:y-11,width:Math.abs(xg-xa),height:22,fill:c,"fill-opacity":.38},zoneG);
+    if(s.gap<=WARN){const xf=px(s.seg,s.d+s.gap);
+      el("text",{x:(xa+xf)/2,y:y+(s.seg==="T"?46:-40),"text-anchor":"middle","font-size":11,"font-weight":"bold",fill:gapCol(s.gap)},zoneG)
+        .textContent=Math.round(s.gap)+"mm";}
+  });
   sl.forEach((s,i)=>{let x,y;
     if(s.seg==="T"){x=px("T",s.d);y=G.yT;}
     else if(s.seg==="B"){x=px("B",s.d);y=G.yB;}
     else{const p=pv[s.seg];x=s.seg==="L"?G.pL:G.pR;y=G.yT+(G.yB-G.yT)*p.y;}
-    slEls[i].g.setAttribute("transform",`translate(${x},${y})`);
-    const r=slEls[i].r;
-    r.setAttribute("fill",s.alarm?"#e5383b":(!s.sv?"#9aa5b1":COLORS[i%COLORS.length]));
-    r.setAttribute("stroke",i===sel?"#f2994a":(s.moving?"#f4b400":"#000"));
-    r.setAttribute("stroke-width",i===sel?4:(s.moving?3:1));
+    const e=slEls[i];
+    e.g.setAttribute("transform",`translate(${x},${y})`);
+    e.r.setAttribute("fill",s.alarm?"#e5383b":(!s.sv?"#9aa5b1":COLORS[i%COLORS.length]));
+    const czStop=S.prot&&(s.cz==="stop"||s.cz==="lock");
+    e.r.setAttribute("stroke",i===sel?"#f2994a":czStop?"#e5383b":(s.moving?"#f4b400":"#000"));
+    e.r.setAttribute("stroke-width",i===sel||czStop?4:(s.moving?3:1));
+    // 站點等待：進度條 (剩餘時間) + 秒數
+    const dw=!!s.atSt&&s.dwellMax>0;
+    for(const k of ["bb","bf","dt"])e[k].setAttribute("display",dw?"":"none");
+    if(dw){const yb=s.seg==="T"?18:-23;e.bb.setAttribute("y",yb);e.bf.setAttribute("y",yb);
+      e.bf.setAttribute("width",44*s.dwell/s.dwellMax);
+      e.dt.setAttribute("y",s.seg==="T"?34:-27);e.dt.textContent=s.dwell.toFixed(1)+"s";}
+    // 滑塊一覽
     const tr=$("tb").children[i];tr.classList.toggle("sel",i===sel);
     tr.querySelector(".p").textContent=coord(s).toFixed(3);
     tr.querySelector(".gp").textContent=grpName(s);
     tr.querySelector(".pt").textContent=s.pt;
     tr.querySelector(".sv").textContent=s.sv&&S.allSv?"ON":"OFF";
-    const [txt,c]=s.alarm?["軸警報","#e5383b"]:!(s.sv&&S.allSv)?["伺服OFF","#9aa5b1"]:s.dwell>0?["站點作業","#2f80ed"]:s.moving?["移動中","#f4b400"]:(s.tgt||S.run)?["等待前方","#f2994a"]:s.arrived?["到位","#22b14c"]:["停止","#5b6673"];
-    tr.querySelector(".stt").innerHTML=`<span class="tag" style="background:${c}">${txt}</span>`;
+    const [txt,c]=s.alarm?["軸警報","#e5383b"]:!(s.sv&&S.allSv)?["伺服OFF","#9aa5b1"]:s.atSt?[`站點作業 ${s.dwell.toFixed(1)}s`,"#2f80ed"]
+      :s.moving?["移動中","#f4b400"]:s.cz==="stop"?["等待前方","#f2994a"]:(s.cz==="pivot"||s.cz==="lock")?["等待橫移","#f2994a"]
+      :(s.tgt||S.run)?["等待","#f2994a"]:s.arrived?["到位","#22b14c"]:["停止","#5b6673"];
+    setHTML(tr.querySelector(".stt"),`<span class="tag" style="background:${c}">${txt}</span>`);
+    const gc=tr.querySelector(".gap");gc.textContent=gapTxt(s.gap);gc.style.color=S.prot?gapCol(s.gap):"";
+    const ck=czKey(s);const [ct,cc]=ck?CZ[ck]:["已關閉","#9aa5b1"];
+    setHTML(tr.querySelector(".cz"),`<span class="tag" style="background:${cc}">${ct}</span>`);
   });
+  // 點位表狀態
+  [...$("ptb").children].forEach(tr=>{const st=ST[+tr.dataset.i];if(!st)return;
+    tr.querySelector(".cnt").textContent=st.cnt;
+    const near=ST.find(o=>o!==st&&o.seg===st.seg&&Math.abs(o.d-st.d)<GAP);
+    const w=sl.find(x=>x.atSt===st),h=sl.find(x=>x.seg===st.seg&&Math.abs(x.d-st.d)<1);
+    setHTML(tr.querySelector(".pst"),
+      near?`<span style="color:#c0262a">⚠ 與 P${near.p} 距離小於最小間距</span>`
+      :w?`<span class="tag" style="background:#2f80ed">作業中 #${w.id} 剩 ${w.dwell.toFixed(1)}s</span>`
+      :h?`<span class="tag" style="background:#22b14c">#${h.id} 在此</span>`:`<span style="color:#9aa5b1">空</span>`);
+  });
+  // 選擇的滑塊
   const s=sl[sel];
   $("selId").textContent="#"+s.id;$("selPos").textContent=coord(s).toFixed(3);
   $("selGrp").textContent=grpName(s);$("selPt").textContent=s.pt;
+  $("selGap").textContent=gapTxt(s.gap);$("selGap").style.color=S.prot?gapCol(s.gap):"";
+  $("selDw").textContent=s.atSt?`P${s.atSt.p} 剩 ${s.dwell.toFixed(1)}s`:"-";
   $("addr").textContent=`軸區域[${axNo(s)}]  命令 EM${20000+4*axNo(s)+36}  狀態 EM${10000+4*axNo(s)+36}`;
-  lamp("lSv",s.sv&&S.allSv,"g");lamp("lAct",true,"g");lamp("lMov",s.moving,"y");lamp("lArr",s.arrived,"g");lamp("lAlm",s.alarm,"r");
-  lamp("lJct",s.seg==="R"||s.seg==="L","b");
+  lamp("lSv",s.sv&&S.allSv,"g");lamp("lMov",s.moving,"y");lamp("lArr",s.arrived,"g");lamp("lDw",!!s.atSt,"b");
+  lamp("lSlow",S.prot&&s.cz==="slow","y");lamp("lCz",S.prot&&(s.cz==="stop"||s.cz==="lock"),"r");
+  lamp("lJct",s.seg==="R"||s.seg==="L","b");lamp("lAlm",s.alarm,"r");
+  // 防碰撞分頁
+  lamp("czProt",S.prot,"g");lamp("czColl",S.coll,"r",true);lamp("czLkL",pv.L.lock,"r");lamp("czLkR",pv.R.lock,"r");
+  let nb=null;sl.forEach(x=>{if(isFinite(x.gap)&&(!nb||x.gap<nb.gap))nb=x;});
+  const nf=nb&&frontOf(nb);if(!nf)nb=null;   // 前車可能這一拍剛上橫移
+  $("czNear").textContent=nb?`#${nb.id} → #${nf.id}  ${Math.round(nb.gap)} mm`:"-";
+  $("czNear").style.color=nb&&S.prot?gapCol(nb.gap):"";
+  $("czSlow").textContent=(S.prot?sl.filter(x=>x.cz==="slow").length:0)+" 台";
+  $("czCnt").textContent=S.czCnt;
+  // 共通
   lamp("hHb",S.comm&&S.hb,"g");lamp("hAuto",S.auto,"g");lamp("hSv",S.allSv,"g");lamp("hLock",sysOk(),"g");
   lamp("hRun",S.run,"b");lamp("hEs",S.estop,"r",true);
   $("msg").textContent=MSG[S.err];$("msg").classList.toggle("err",S.err!==0);
